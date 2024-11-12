@@ -69,6 +69,7 @@
 				data-bs-html="true"
 				data-bs-custom-class="device-view-tooltip"
 			>
+			{% if port_type == "status" %}
 				{% if int.enabled and int.connected_endpoints|length > 0  or int.is_port and int.link_peers|length > 0 %}
 				<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
 				{% elif int.enabled %}
@@ -76,7 +77,46 @@
 				{% else %}
 				<span class="text-white"><i class="mdi mdi-close-thick"></i></span>
 				{% endif %}
-			</a>
+
+			<!-- this will display the first letter of the VLAN name assigned, or tags if there are trunks -->
+			{% elif port_type == "vlan" %}
+				{% if int.mode == "access" %}
+					{% if int.untagged_vlan %}
+						{% with first_letter=int.untagged_vlan.name|slice:":1"|upper  %}
+						{{ first_letter }}
+						{% endwith %}
+					{% elif int.untagged_vlan %}
+						<span class="text-white"><i class="mdi mdi-alpha-a"></i></span>
+					{% endif %}					
+				{% elif int.mode == "tagged" %}
+					<span class="text-white"><i class="mdi mdi-tag"></i></span>
+				{% elif int.mode == "tagged-all" %}
+					<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+				{% endif %}
+			
+			<!-- this could evaluate PSE / PD with different icons, but... for now just PoE exists or not... -->
+			{% elif port_type == "poe" %}
+				{% if int.poe_mode or int.poe_type %}
+				<span class="text-white"><i class="mdi  mdi-power-plug"></i></span>
+				{% else %}
+				<span class="text-white"><i class="mdi  mdi-power-plug-off"></i></span>
+				{% endif %}
+
+			{% elif port_type == "type" %}
+				{% if 'base-t' in int.type %}
+					<span class="text-white"><i class="mdi mdi-ethernet"></i></span>
+				{% elif 'base-x' in int.type or 'sfp' in int.type or 'qsfp' in int.type or 'pon' in int.type or 'oc' in int.type or 'fc' in int.type %}
+					<span class="text-white"><i class="mdi mdi-laser-pointer"></i></span>
+				{% elif 'ieee802' in int.type or 'gsm' in int.type or 'cdma' in int.type or 'lte' in int.type or '4g' in int.type or '5g' in int.type or 'wireless' in int.type %}
+					<span class="text-white"><i class="mdi mdi-wifi"></i></span>
+				{% elif 'stackwise' in int.type or 'summitstack' in int.type or 'vcp' in int.type %}
+					<span class="text-white"><i class="mdi mdi-cable-data"></i></span>
+				{% else %}
+					<span class="text-white"><i class="mdi mdi-help"></i></span>
+				{% endif %}
+				
+			{% endif %}
+				</a>
 			{% endfor %}
 		</div>
 		{% endfor %} {% endspaceless %}
@@ -88,9 +128,19 @@
 	</div>
 	<div class="card-body">
 		<form>
-			<div class="form-check">
-				<input onChange="this.form.submit()" type="checkbox" name="cable_colors" class="form-check-input" {% if cable_colors == "on" %}checked{% endif %} />
-				<label for="cable_colors" class="form-check-label">Cable Colors</label>
+			<div class="form-group mt-3">		
+				<div class="form-check">
+					<input onChange="this.form.submit()" type="checkbox" name="cable_colors" class="form-check-input" {% if cable_colors == "on" %}checked{% endif %} />
+					<label for="cable_colors" class="form-check-label">Cable Colors</label>
+				</div>
+				<label for="form-check-label" class="mb-2">Port Display</label>
+				<select name="port_type" id="port_type" class="form-control mb-3" onChange="this.form.submit()">
+					<option value="status" {% if port_type == "status" %}selected{% endif %}>Port Status</option>
+					<option value="vlan" {% if port_type == "vlan" %}selected{% endif %}>VLAN Name</option>
+					<option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
+					<option value="type" {% if port_type == "type" %}selected{% endif %}>Interface Type</option>
+				</select>
+
 			</div>
 		</form>
 	</div>
