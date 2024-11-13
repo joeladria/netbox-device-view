@@ -52,6 +52,7 @@ class DeviceDeviceView(generic.ObjectView):
             "ports_chassis": ports_chassis,
             "cable_colors": request.GET.get("cable_colors", "off"),
             "port_type": request.GET.get("port_type", "status"),
+            "display_size": request.GET.get("display_size", "small"),
             "something_else": request.GET.get("something_else", "off"),
         }
 

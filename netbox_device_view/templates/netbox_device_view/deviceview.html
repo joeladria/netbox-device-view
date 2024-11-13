@@ -21,6 +21,14 @@
 		height:{{ height }}px;
 	}
 	{% endif %}
+	{% if display_size == "large" %}
+	.deviceview { 
+		grid-auto-columns: 40px;
+		grid-auto-rows: 40px;
+		height: 84px;
+		width: 1404px;
+	}
+	{% endif %}
 </style>
 {% endblock %}
 {% block content %}
@@ -116,6 +124,12 @@
 				{% endif %}
 				
 			{% endif %}
+
+			{% if display_size == "large" %}
+				{% with last_digits=int.name|slice:"-2:" %}
+				<p class="text-white">{{ last_digits }}</p>
+				{% endwith %}
+			{% endif %}
 				</a>
 			{% endfor %}
 		</div>
@@ -140,6 +154,11 @@
 					<option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
 					<option value="type" {% if port_type == "type" %}selected{% endif %}>Interface Type</option>
 				</select>
+				<label for="form-check-label" class="mb-2">Display Size</label>
+				<select name="display_size" id="display_size" class="form-control mb-3" onChange="this.form.submit()">
+					<option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
+					<option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
+				</select>				
 
 			</div>
 		</form>
