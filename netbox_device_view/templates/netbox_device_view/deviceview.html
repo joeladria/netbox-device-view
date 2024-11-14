@@ -124,11 +124,20 @@
 				{% endif %}
 				
 			{% endif %}
-
+			
+			<!-- large view displays port number, or maybe label-->
 			{% if display_size == "large" %}
-				{% with last_digits=int.name|slice:"-2:" %}
-				<p class="text-white">{{ last_digits }}</p>
+				
+				{% with last_segment=int.name|split:"/"|last %}
+					<p class="text-white">
+						{% for char in last_segment %}
+							{% if char in "0123456789" %}
+								{{ char }}
+							{% endif %}
+						{% endfor %}
+					</p>
 				{% endwith %}
+				
 			{% endif %}
 				</a>
 			{% endfor %}
