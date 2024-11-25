@@ -110,6 +110,16 @@
 				<span class="text-white"><i class="mdi  mdi-power-plug-off"></i></span>
 				{% endif %}
 
+			{% elif port_type == "host" %}
+				{% if int.connected_endpoints|length > 0 %}
+				{% for ce in int.connected_endpoints %}
+				{{ ce.device }}
+				{% endfor %}
+				
+				{% else %}
+				<span class="text-white"><i class="mdi  mdi-help"></i></span>
+				{% endif %}
+
 			{% elif port_type == "type" %}
 				{% if 'base-t' in int.type %}
 					<span class="text-white"><i class="mdi mdi-ethernet"></i></span>
@@ -127,12 +137,11 @@
 			
 			<!-- large view displays port number, or maybe label-->
 			{% if display_size == "large" %}
-				
 				{% with last_segment=int.name|split:"/"|last %}
 					<p class="text-white">
 						{% for char in last_segment %}
 							{% if char in "0123456789" %}
-								{{ char }}
+								<small>{{ char }}</small>
 							{% endif %}
 						{% endfor %}
 					</p>
@@ -160,6 +169,7 @@
 				<select name="port_type" id="port_type" class="form-control mb-3" onChange="this.form.submit()">
 					<option value="status" {% if port_type == "status" %}selected{% endif %}>Port Status</option>
 					<option value="vlan" {% if port_type == "vlan" %}selected{% endif %}>VLAN Name</option>
+					<option value="host" {% if port_type == "host" %}selected{% endif %}>Host</option>
 					<option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
 					<option value="type" {% if port_type == "type" %}selected{% endif %}>Interface Type</option>
 				</select>
