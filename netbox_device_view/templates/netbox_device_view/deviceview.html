@@ -86,11 +86,10 @@
 				<span class="text-white"><i class="mdi mdi-close-thick"></i></span>
 				{% endif %}
 
-			<!-- this will display the first letter of the VLAN name assigned, or tags if there are trunks -->
 			{% elif port_type == "vlan" %}
 				{% if int.mode == "access" %}
 					{% if int.untagged_vlan %}
-						{% with first_letter=int.untagged_vlan.name|slice:":1"|upper  %}
+						{% with first_letter=int.untagged_vlan.name|slice:":1"|upper  %} <!-- might fail -->
 						{{ first_letter }}
 						{% endwith %}
 					{% elif int.untagged_vlan %}
@@ -101,6 +100,19 @@
 				{% elif int.mode == "tagged-all" %}
 					<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
 				{% endif %}
+
+				{% elif port_type == "vlanid" %}
+				{% if int.mode == "access" %}
+					{% if int.untagged_vlan %}
+						{{ int.untagged_vlan.vid }}
+					{% elif int.untagged_vlan %}
+						<span class="text-white"><i class="mdi mdi-alpha-a"></i></span>
+					{% endif %}					
+				{% elif int.mode == "tagged" %}
+					<span class="text-white"><i class="mdi mdi-tag"></i></span>
+				{% elif int.mode == "tagged-all" %}
+					<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+				{% endif %}				
 			
 			<!-- this could evaluate PSE / PD with different icons, but... for now just PoE exists or not... -->
 			{% elif port_type == "poe" %}
@@ -110,6 +122,11 @@
 				<span class="text-white"><i class="mdi  mdi-power-plug-off"></i></span>
 				{% endif %}
 
+			{% elif port_type == "label" %}
+				{% if int.label %}
+					{{ int.label }}
+				{% endif %}
+				
 			{% elif port_type == "host" %}
 				{% if int.connected_endpoints|length > 0 %}
 				{% for ce in int.connected_endpoints %}
@@ -168,10 +185,12 @@
 				<label for="form-check-label" class="mb-2">Port Display</label>
 				<select name="port_type" id="port_type" class="form-control mb-3" onChange="this.form.submit()">
 					<option value="status" {% if port_type == "status" %}selected{% endif %}>Port Status</option>
-					<option value="vlan" {% if port_type == "vlan" %}selected{% endif %}>VLAN Name</option>
+					<option value="vlan" {% if port_type == "vlan" %}selected{% endif %}>VLAN Letter</option>
+					<option value="vlanid" {% if port_type == "vlanid" %}selected{% endif %}>VLAN ID</option>					
 					<option value="host" {% if port_type == "host" %}selected{% endif %}>Host</option>
+					<option value="label" {% if port_type == "label" %}selected{% endif %}>Label</option>					
 					<option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
-					<option value="type" {% if port_type == "type" %}selected{% endif %}>Interface Type</option>
+					<option value="type" {% if port_type == "type" %}selected{% endif %}>Type</option>
 				</select>
 				<label for="form-check-label" class="mb-2">Display Size</label>
 				<select name="display_size" id="display_size" class="form-control mb-3" onChange="this.form.submit()">
