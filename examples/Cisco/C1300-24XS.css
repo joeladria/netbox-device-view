@@ -1,0 +1,5 @@
+.deviceview.area { 
+    grid-template-areas: 
+    "x x x s20 s21 s22 s23 s24 s25 s26 s27 s28 s29 s30 s31 s32 s33 s34 s35 s36 s37 s38 s39 s40 s41 s42 s43 s44 tengigabitethernet0-21 tengigabitethernet0-23 z  z  "
+    "x x x tengigabitethernet0-1 tengigabitethernet0-2 tengigabitethernet0-3 tengigabitethernet0-4 tengigabitethernet0-5 tengigabitethernet0-6 s0 tengigabitethernet0-7 tengigabitethernet0-8 tengigabitethernet0-9 tengigabitethernet0-10 tengigabitethernet0-11 tengigabitethernet0-12 s1 tengigabitethernet0-13 tengigabitethernet0-14 tengigabitethernet0-15 tengigabitethernet0-16 tengigabitethernet0-17 tengigabitethernet0-18 s2 tengigabitethernet0-19 tengigabitethernet0-20 s3 s4 tengigabitethernet0-22 tengigabitethernet0-24 z  z  "
+}

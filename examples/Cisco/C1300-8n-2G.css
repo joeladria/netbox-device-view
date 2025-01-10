@@ -1,7 +1,0 @@
-/* C1300-8P/FP/T-2G */
-.deviceview.area {
-    background-color: #d9d9d9;
-         grid-template-areas:
-           "x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x"
-           "x x x gigabitethernet1 gigabitethernet2 gigabitethernet3 gigabitethernet4 gigabitethernet5 gigabitethernet6 gigabitethernet7 gigabitethernet8 s0 gigabitethernet9 gigabitethernet10 gigabitethernet11 gigabitethernet12 z z z z z z z z z z z z z z z z ";
-}

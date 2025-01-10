@@ -1,0 +1,7 @@
+/* 16P/FP/T-2G */
+.deviceview.area {
+    background-color: #d9d9d9;
+            grid-template-areas:
+                        "x x x gigabitethernet1 gigabitethernet3 gigabitethernet5 gigabitethernet7 s0 gigabitethernet9 gigabitethernet11 gigabitethernet13 gigabitethernet15 z z z z z z z z z z z z z z z z z z z z "
+                        "x x x gigabitethernet2 gigabitethernet4 gigabitethernet6 gigabitethernet8 s0 gigabitethernet10 gigabitethernet12  gigabitethernet14 gigabitethernet16 s1 s2 s3 s4 gigabitethernet16 gigabitethernet17 z z z z z z z z z z z z z z z z";
+}
