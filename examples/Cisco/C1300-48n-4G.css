@@ -1,0 +1,6 @@
+/* C13048P/T/FP-4G */
+.deviceview.area {
+	grid-template-areas:
+		"gigabitethernet1 gigabitethernet3 gigabitethernet5 gigabitethernet7 gigabitethernet9 gigabitethernet11 s0 gigabitethernet13 gigabitethernet15 gigabitethernet17 gigabitethernet19 gigabitethernet21 gigabitethernet23 s1 gigabitethernet25 gigabitethernet27 gigabitethernet29 gigabitethernet31 gigabitethernet33 gigabitethernet35 s2 gigabitethernet37 gigabitethernet39 gigabitethernet41 gigabitethernet43 gigabitethernet45 gigabitethernet47 z z z z z"
+		"gigabitethernet2 gigabitethernet4 gigabitethernet6 gigabitethernet8 gigabitethernet10 gigabitethernet12 s0 gigabitethernet14 gigabitethernet16 gigabitethernet18 gigabitethernet20 gigabitethernet22 gigabitethernet24 s1 gigabitethernet26 gigabitethernet28 gigabitethernet30 gigabitethernet32 gigabitethernet34 gigabitethernet36 s2 gigabitethernet38 gigabitethernet40 gigabitethernet42 gigabitethernet44 gigabitethernet46 gigabitethernet48 s3 gigabitetherne49 gigabitethernet50 gigabitethernet51 gigabitethernet52";
+}
