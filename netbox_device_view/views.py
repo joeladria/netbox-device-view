@@ -80,6 +80,9 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
         devices_to_display = Device.objects.none()
         site = None # Initialize site
         rack = None # Initialize rack
+        
+        all_sites = Site.objects.all()
+        racks_for_dropdown = Rack.objects.none()
 
         if site_slug:
             try:
@@ -87,7 +90,10 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
                 devices_to_display = Device.objects.filter(site=site).prefetch_related(
                     'device_type', 'modules', 'interfaces', 'frontports', 'rearports', 'virtual_chassis__members'
                 )
+                racks_for_dropdown = Rack.objects.filter(site=site)
             except Site.DoesNotExist:
+                site_slug = None # Clear invalid site slug
+                racks_for_dropdown = Rack.objects.all() # Show all racks if site is invalid
                 pass 
         elif rack_id:
             try:
@@ -95,8 +101,20 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
                 devices_to_display = Device.objects.filter(rack=rack).prefetch_related(
                     'device_type', 'modules', 'interfaces', 'frontports', 'rearports', 'virtual_chassis__members'
                 )
+                # If a rack is selected, we might still want to show its site's racks or all racks
+                # For simplicity now, if rack is chosen directly, site context for dropdown might not be primary
+                if rack.site:
+                    racks_for_dropdown = Rack.objects.filter(site=rack.site)
+                    site = rack.site # Set current site based on selected rack
+                else:
+                    racks_for_dropdown = Rack.objects.all() # Or just this rack, or all racks
             except Rack.DoesNotExist:
+                rack_id = None # Clear invalid rack id
+                racks_for_dropdown = Rack.objects.all()
                 pass
+        else: # Neither site_slug nor rack_id provided
+            racks_for_dropdown = Rack.objects.all()
+
 
         prepared_devices_data = []
         # Use the existing models import
@@ -129,6 +147,10 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             'title': 'Device Elevation',
             'site': site,
             'rack': rack,
+            'all_sites': all_sites,
+            'racks_for_dropdown': racks_for_dropdown,
+            'selected_site_slug': site_slug,
+            'selected_rack_id': int(rack_id) if rack_id else None,
             # Pass query params to template for potential use in regenerating links or options
             'cable_colors': request.GET.get("cable_colors", "off"),
             'port_type': request.GET.get("port_type", "status"),

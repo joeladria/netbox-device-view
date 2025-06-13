@@ -55,6 +55,42 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Filter Devices</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" action="{% url 'plugins:netbox_device_view:device_elevation' %}" class="form-horizontal" id="device_elevation_filter_form">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="id_site_slug" class="form-label">Site</label>
+                            <select name="site_slug" id="id_site_slug" class="form-select" onchange="this.form.submit()">
+                                <option value="">---------</option>
+                                {% for s in all_sites %}
+                                    <option value="{{ s.slug }}" {% if s.slug == selected_site_slug %}selected{% endif %}>{{ s.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_rack_id" class="form-label">Rack</label>
+                            <select name="rack_id" id="id_rack_id" class="form-select" onchange="this.form.submit()">
+                                <option value="">---------</option>
+                                {% for r in racks_for_dropdown %}
+                                    <option value="{{ r.pk }}" {% if r.pk == selected_rack_id %}selected{% endif %}>
+                                        {{ r.name }} {% if not selected_site_slug and r.site %}({{ r.site.name }}){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <a href="{% url 'plugins:netbox_device_view:device_elevation' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-3">
         {% if site %}
             <h2>Device Elevation: {{ site.name }}</h2>
         {% elif rack %}
