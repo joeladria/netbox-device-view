@@ -1,0 +1,7 @@
+/* UniFi Switch Pro Aggregation */
+
+.deviceview.area {
+	grid-template-areas:
+		"x x x x x x x x x x x x x sfp-1 sfp-3 sfp-5 sfp-7 sfp-9 sfp-11 sfp-13 sfp-15 sfp-17 sfp-19 sfp-21 sfp-23 sfp-25 sfp-27 s0 sfp28-29 sfp28-31 z"
+		"x x x x x x x x x x x x x sfp-2 sfp-4 sfp-6 sfp-8 sfp-10 sfp-12 sfp-14 sfp-16 sfp-18 sfp-20 sfp-22 sfp-24 sfp-26 sfp-28 s0 sfp28-30 sfp28-32 z";
+}
