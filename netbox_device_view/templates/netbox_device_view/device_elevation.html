@@ -1,0 +1,289 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+{% load helpers %}
+{% load plugins %} {# Ensure plugins is loaded if you use plugin-specific tags, though not strictly needed for this base template #}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'netbox_device_view/css/device_view.css' %}" />
+<style>
+    {% autoescape off %}
+    {% for data in prepared_devices %}
+        {% for id, ddv_css in data.dv_css_map.items %}
+            {{ ddv_css }}
+        {% endfor %}
+    {% endfor %}
+    {% endautoescape %}
+
+    .multi-device-container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px; /* Space between device views */
+    }
+    .device-instance-wrapper {
+        border: 1px solid #dee2e6; /* NetBox standard border color */
+        padding: 1rem; /* NetBox standard padding */
+        border-radius: 5px;
+        background-color: var(--c-bg-card); /* NetBox card background */
+    }
+    .device-instance-wrapper h3 {
+        margin-top: 0;
+        margin-bottom: 1rem; /* Space below device name */
+        font-size: 1.25rem; /* Slightly larger font for device name */
+    }
+    
+    /* Individual device view height, prefixed by instance_id */
+    {% for data in prepared_devices %}
+    .{{ data.instance_id }} .deviceview {
+        height: {{ data.height }}px;
+        /* Default display_size to small for multi-view, or make it configurable */
+    }
+    {% if display_size == "large" %}
+    .{{ data.instance_id }} .deviceview { 
+		grid-auto-columns: 40px;
+		grid-auto-rows: 40px;
+		/* height: 84px; */ /* Height is per device_type U height */
+		/* width: 1404px; */ /* Width might need to be more dynamic or removed for multi-view */
+	}
+    {% endif %}
+    {% endfor %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        {% if site %}
+            <h2>Device Elevation: {{ site.name }}</h2>
+        {% elif rack %}
+            <h2>Device Elevation: {{ rack.name }}</h2>
+        {% elif not prepared_devices and request.GET.site_slug %}
+            {# This case means a site was specified but no devices found/matched #}
+        {% elif not prepared_devices and request.GET.rack_id %}
+            {# This case means a rack was specified but no devices found/matched #}
+        {% else %}
+            <h2>Device Elevation</h2>
+            <p class="text-muted">Please specify a site or rack to view devices (e.g., <code>?site_slug=my-site</code> or <code>?rack_id=123</code>).</p>
+        {% endif %}
+
+        <div class="multi-device-container mt-3">
+            {% for data in prepared_devices %}
+            <div class="device-instance-wrapper">
+                <h3>
+                    <a href="{{ data.device_obj.get_absolute_url }}">{{ data.device_obj.name|default:"Unnamed Device" }}</a>
+                    {% if data.device_obj.device_role %}
+                        <small class="text-muted">({{ data.device_obj.device_role.name }})</small>
+                    {% endif %}
+                </h3>
+                <div class="{{ data.instance_id }}">
+                    {% spaceless %}
+                        {% for device_vc_position_or_name_key, interfaces_list in data.ports_chassis_map.items %}
+                            {# Determine the class for the main device view div #}
+                            {% with main_device_class="deviceview area" %}
+                                {% if data.device_obj.virtual_chassis and data.device_obj.virtual_chassis.members.all %}
+                                    {# If it's a VC, the key might be the vc_position #}
+                                    {% for member_actual in data.device_obj.virtual_chassis.members.all %}
+                                        {% if member_actual.vc_position == device_vc_position_or_name_key %}
+                                            {% with main_device_class=main_device_class|add:" d"|add:device_vc_position_or_name_key %}
+                                                {% for sw_vc_pos, modules_list in data.modules_map.items %}
+                                                    {% if sw_vc_pos == device_vc_position_or_name_key %}
+                                                        {% for module in modules_list %}
+                                                            {% with main_device_class=main_device_class|add:" module"|add:module.module_type.model %}
+                                                            {% endwith %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                     {# If not a VC, modules are typically under key 1 in modules_map if prepare was called for a single device context before #}
+                                     {# For multi-device, modules_map should correspond to the device itself, check structure from prepare #}
+                                     {% for sw_id, modules_list in data.modules_map.items %} {# Assuming modules_map key is 1 for non-VC or matches device context #}
+                                        {% for module in modules_list %}
+                                            {% with main_device_class=main_device_class|add:" module"|add:module.module_type.model %}
+                                            {% endwith %}
+                                        {% endfor %}
+                                     {% endfor %}
+                                {% endif %}
+
+                                <div class="{{ main_device_class }}">
+                                    {% for intf in interfaces_list %}
+                                    <a
+                                        {% if link_type == "host" and intf.connected_endpoints|length > 0 %}
+                                            {% for ce in intf.connected_endpoints %}
+                                            href="{{ ce.device.get_absolute_url }}"
+                                            {% endfor %}
+                                        {% elif link_type == "trace" and intf.get_absolute_url %}
+                                        href="{{intf.get_absolute_url}}trace/"
+                                        {% elif intf.get_absolute_url %}
+                                        href="{{intf.get_absolute_url}}"
+                                        {% else %}
+                                        href="#" {# Fallback if no URL #}
+                                        {% endif %}
+                                        class="device-view-port 
+                                        {% if cable_colors == "on" and intf.cable.color == "" or cable_colors == "on" and intf.cable == None %}
+                                            nocolor
+                                        {% elif cable_colors == "on" or port_type == "vlan" or port_type == "vlanid" or port_type == "host" %}
+                                        {# No specific background if these port_types are active, color comes from cable or VLAN #}
+                                        {% elif intf.enabled and intf.connected_endpoints|length > 0 or intf.is_port and intf.link_peers|length > 0 %}
+                                        bg-success
+                                        {% elif intf.enabled %}
+                                        bg-secondary
+                                        {% else %}
+                                        bg-danger
+                                        {% endif %}
+                                        {% if intf.untagged_vlan %}
+                                            vlan-{{ intf.untagged_vlan.vid }} 
+                                        {% endif %}"
+                                        title="{{ intf.name }}
+                                        {% if intf.connected_endpoints|length > 0 %}<hr> {# Use <hr> for HTML in title #}
+                                            {% for ce in intf.connected_endpoints %}
+                                            {{ ce.device }} | {{ ce.name }}<br>
+                                            {% endfor %}
+                                        {% elif intf.link_peers|length > 0 %}<hr>
+                                            {% for lp in intf.link_peers %}
+                                            {% if lp.device %}
+                                            {{ lp.device }} | {{ lp.name }}<br>
+                                            {% elif lp.circuit %}
+                                            {{ lp }}<br>
+                                            {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        "
+                                        style="grid-area: {{ intf.stylename }}{% if cable_colors == 'on' and intf.cable and intf.cable.color != '' %}; background-color: #{{ intf.cable.color }}{% endif %}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-html="true"
+                                        data-bs-custom-class="device-view-tooltip"
+                                    >
+                                    {# Port content logic based on port_type, adapted from deviceview.html #}
+                                    {% if port_type == "status" %}
+                                        {% if intf.enabled and intf.connected_endpoints|length > 0  or intf.is_port and intf.link_peers|length > 0 %}
+                                        <span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+                                        {% elif intf.enabled %}
+                                        <span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+                                        {% else %}
+                                        <span class="text-white"><i class="mdi mdi-close-thick"></i></span>
+                                        {% endif %}
+                                    {% elif port_type == "vlan" %}
+                                        {% if intf.mode == "access" and intf.untagged_vlan and intf.untagged_vlan.name %}
+                                            <span class="text-white">{{ intf.untagged_vlan.name|slice:":1"|upper }}</span>
+                                        {% elif intf.mode == "tagged" %}
+                                            <span class="text-white"><i class="mdi mdi-tag"></i></span>
+                                        {% elif intf.mode == "tagged-all" %}
+                                            <span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+                                        {% endif %}
+                                    {% elif port_type == "vlanid" %}
+                                        {% if intf.mode == "access" and intf.untagged_vlan %}
+                                            <span class="text-white">{{ intf.untagged_vlan.vid }}</span>
+                                        {% elif intf.mode == "tagged" %}
+                                            <span class="text-white"><i class="mdi mdi-tag"></i></span>
+                                        {% elif intf.mode == "tagged-all" %}
+                                            <span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+                                        {% endif %}             
+                                    {% elif port_type == "poe" %}
+                                        {% if intf.poe_mode or intf.poe_type %}
+                                        <span class="text-white"><i class="mdi mdi-power-plug"></i></span>
+                                        {% else %}
+                                        <span class="text-white"><i class="mdi mdi-power-plug-off"></i></span>
+                                        {% endif %}
+                                    {% elif port_type == "label" and intf.label %}
+                                        <code class="text-white" style="font-size:75%">{{ intf.label }}</code>
+                                    {% elif port_type == "host" %}
+                                        {% if intf.connected_endpoints|length > 0 %}
+                                            {% for ce in intf.connected_endpoints %}
+                                                {% if ce.device and ce.device.name %}
+                                                <code class="text-white" style="font-size:75%">{{ ce.device.name|split:"-"|last }}</code>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                        <span class="text-white"><i class="mdi mdi-help"></i></span>
+                                        {% endif %}
+                                    {% elif port_type == "type" %}
+                                        {% if 'base-t' in intf.type %}
+                                            <span class="text-white"><i class="mdi mdi-ethernet"></i></span>
+                                        {% elif 'sfp' in intf.type or 'qsfp' in intf.type or 'xfp' in intf.type or 'cfc' in intf.type or 'base-x' in intf.type %}
+                                            <span class="text-white"><i class="mdi mdi-laser-pointer"></i></span>
+                                        {% elif 'ieee802' in intf.type or 'wireless' in intf.type %}
+                                            <span class="text-white"><i class="mdi mdi-wifi"></i></span>
+                                        {% else %}
+                                            <span class="text-white"><i class="mdi mdi-help"></i></span>
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                    {% if display_size == "large" and intf.name %}
+                                        {% with last_segment=intf.name|split:"/"|last %}
+                                            <p class="text-white" style="font-size: 60%; margin:0; line-height:1;">
+                                                {% for char_code in last_segment %}
+                                                    {% if char_code >= "0" and char_code <= "9" %}
+                                                        {{ char_code }}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </p>
+                                        {% endwith %}
+                                    {% endif %}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    {% endspaceless %}
+                </div>
+            </div>
+            {% empty %}
+                {% if request.GET.site_slug or request.GET.rack_id %}
+                <div class="col-md-12">
+                    <p>No devices with applicable views found in the selected {{ site|yesno:"site,rack"|default:"location" }}.</p>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+<div class="card mt-3">
+    <div class="card-header"><h4>Options</h4></div>
+    <div class="card-body">
+        <form method="get" action="{% url 'plugins:netbox_device_view:device_elevation' %}">
+            {% if request.GET.site_slug %}<input type="hidden" name="site_slug" value="{{ request.GET.site_slug }}">{% endif %}
+            {% if request.GET.rack_id %}<input type="hidden" name="rack_id" value="{{ request.GET.rack_id }}">{% endif %}
+            
+            <div class="form-group mt-2">
+                <label for="display_size" class="form-check-label mb-1">Display Size</label>
+                <select name="display_size" id="display_size" class="form-select form-select-sm mb-2" onChange="this.form.submit()">
+                    <option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
+                    <option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
+                </select>
+            </div>
+            <div class="form-group mt-2">
+                <label for="port_type" class="form-check-label mb-1">Port Display</label>
+                <select name="port_type" id="port_type" class="form-select form-select-sm mb-2" onChange="this.form.submit()">
+                    <option value="status" {% if port_type == "status" %}selected{% endif %}>Status</option>
+                    <option value="vlan" {% if port_type == "vlan" %}selected{% endif %}>VLAN (Letter)</option>
+                    <option value="vlanid" {% if port_type == "vlanid" %}selected{% endif %}>VLAN (ID)</option>
+                    <option value="host" {% if port_type == "host" %}selected{% endif %}>Host</option>
+                    <option value="label" {% if port_type == "label" %}selected{% endif %}>Label</option>
+                    <option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
+                    <option value="type" {% if port_type == "type" %}selected{% endif %}>Type</option>
+                </select>
+            </div>
+            <div class="form-check mt-2">
+                <input onChange="this.form.submit()" type="checkbox" name="cable_colors" id="cable_colors" class="form-check-input" {% if cable_colors == "on" %}checked{% endif %} />
+                <label for="cable_colors" class="form-check-label">Cable Colors</label>
+            </div>
+            <div class="form-group mt-2">
+                <label for="link_type" class="form-check-label mb-1">Port Link</label>
+                <select name="link_type" id="link_type" class="form-select form-select-sm" onChange="this.form.submit()">
+                    <option value="trace" {% if link_type == "trace" %}selected{% endif %}>Trace</option>
+                    <option value="host" {% if link_type == "host" %}selected{% endif %}>Host</option>
+                    <option value="interface" {% if link_type == "interface" %}selected{% endif %}>Interface</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

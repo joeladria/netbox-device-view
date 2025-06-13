@@ -1,6 +1,7 @@
 from dcim.models import ConsolePort
 from .models import DeviceView
 from django.core.exceptions import ObjectDoesNotExist
+from django.apps import apps # Added for getting DeviceView model reliably
 
 import re
 
@@ -52,16 +53,31 @@ def process_ports(ports, ports_chassis, dev):
     return ports_chassis
 
 
-def prepare(obj):
+def prepare(obj, instance_prefix=None): # Added instance_prefix argument
     ports_chassis = {}
     dv = {}
     modules = {}
+    device_view_model = apps.get_model('netbox_device_view', 'DeviceView')
 
     try:
         if obj.virtual_chassis is None:
-            dv[1] = DeviceView.objects.get(
-                device_type=obj.device_type
-            ).grid_template_area
+            device_view_instance = device_view_model.objects.get(device_type=obj.device_type)
+            grid_css = device_view_instance.grid_template_area
+
+            if instance_prefix:
+                prefixed_css_lines = []
+                for line in grid_css.splitlines():
+                    stripped_line = line.strip()
+                    if stripped_line.startswith('.') and '{' in stripped_line:
+                        prefixed_css_lines.append(f".{instance_prefix} {stripped_line}")
+                    elif stripped_line.startswith('#') and '{' in stripped_line:
+                        prefixed_css_lines.append(f".{instance_prefix} {stripped_line}")
+                    else:
+                        prefixed_css_lines.append(line)
+                dv[1] = "\n".join(prefixed_css_lines)
+            else:
+                dv[1] = grid_css
+            
             modules[1] = obj.modules.all()
             ports_chassis = process_interfaces(
                 obj.interfaces.all(), ports_chassis, obj.name
@@ -75,14 +91,35 @@ def prepare(obj):
             )
         else:
             for member in obj.virtual_chassis.members.all():
-                dv[member.vc_position] = DeviceView.objects.get(
-                    device_type=member.device_type
-                ).grid_template_area.replace(
-                    ".area", ".area.d" + str(member.vc_position)
-                )
+                # For virtual chassis members, the existing logic for namespacing might be sufficient,
+                # or it might also need to incorporate the instance_prefix if a VC master is part of a multi-device view.
+                # For now, keeping the original VC logic, assuming instance_prefix is mainly for distinct devices on the new page.
+                # If a VC itself is shown on the multi-device page, its internal members are already handled by 'd' + vc_position.
+                # The instance_prefix would apply to the VC as a whole.
+
+                member_device_view_instance = device_view_model.objects.get(device_type=member.device_type)
+                member_grid_css = member_device_view_instance.grid_template_area
+                
+                # Apply VC internal prefix
+                processed_member_grid_css = member_grid_css.replace(".area", ".area.d" + str(member.vc_position))
+
+                if instance_prefix: # If the whole VC is on a multi-device page, prefix its already VC-namespaced CSS
+                    prefixed_css_lines = []
+                    for line in processed_member_grid_css.splitlines():
+                        stripped_line = line.strip()
+                        if stripped_line.startswith('.') and '{' in stripped_line:
+                            prefixed_css_lines.append(f".{instance_prefix} {stripped_line}")
+                        elif stripped_line.startswith('#') and '{' in stripped_line:
+                            prefixed_css_lines.append(f".{instance_prefix} {stripped_line}")
+                        else:
+                            prefixed_css_lines.append(line)
+                    dv[member.vc_position] = "\n".join(prefixed_css_lines)
+                else:
+                    dv[member.vc_position] = processed_member_grid_css
+
                 modules[member.vc_position] = member.modules.all()
                 ports_chassis = process_interfaces(
-                    member.interfaces.all(), ports_chassis, member.vc_position
+                    member.interfaces.all(), ports_chassis, member.vc_position # Using vc_position as key for ports_chassis
                 )
                 ports_chassis = process_ports(
                     ConsolePort.objects.filter(device_id=member.id),
