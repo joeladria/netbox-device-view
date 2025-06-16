@@ -159,20 +159,22 @@
                                         {% else %}
                                         href="#" {# Fallback if no URL #}
                                         {% endif %}
-                                        class="device-view-port 
-                                        {% if cable_colors == "on" and intf.cable.color == "" or cable_colors == "on" and intf.cable == None %}
-                                            nocolor
-                                        {% elif cable_colors == "on" or port_type == "vlan" or port_type == "vlanid" or port_type == "host" %}
-                                        {# No specific background if these port_types are active, color comes from cable or VLAN #}
-                                        {% elif intf.enabled and intf.connected_endpoints|length > 0 or intf.is_port and intf.link_peers|length > 0 %}
-                                        bg-success
-                                        {% elif intf.enabled %}
-                                        bg-secondary
-                                        {% else %}
-                                        bg-danger
+                                        class="device-view-port
+                                        {% if cable_colors == "Cable" %}
+                                            {% if not intf.cable or not intf.cable.color %}
+                                                nocolor
+                                            {% endif %}
+                                        {% elif cable_colors == "Status" or cable_colors == "None" %}
+                                            {% if intf.enabled and intf.connected_endpoints|length > 0 or intf.is_port and intf.link_peers|length > 0 %}
+                                                bg-success
+                                            {% elif intf.enabled %}
+                                                bg-secondary
+                                            {% else %}
+                                                bg-danger
+                                            {% endif %}
                                         {% endif %}
-                                        {% if intf.untagged_vlan %}
-                                            vlan-{{ intf.untagged_vlan.vid }} 
+                                        {% if intf.untagged_vlan and cable_colors != "VLAN Role" %}
+                                            vlan-{{ intf.untagged_vlan.vid }}
                                         {% endif %}"
                                         title="{{ intf.name }}
                                         {% if intf.connected_endpoints|length > 0 %}<hr> {# Use <hr> for HTML in title #}
@@ -188,8 +190,20 @@
                                             {% endif %}
                                             {% endfor %}
                                         {% endif %}
+                                        {% if cable_colors == 'VLAN Role' %}<hr>VLAN Role Debug:<br>Role: {{ intf.debug_vlan_role_name | default:"N/A" }}<br>Tag: {{ intf.debug_vlan_role_tag_name | default:"N/A" }}<br>Color: {{ intf.debug_vlan_role_tag_color | default:"N/A" }}{% endif %}
                                         "
-                                        style="grid-area: {{ intf.stylename }}{% if cable_colors == 'on' and intf.cable and intf.cable.color != '' %}; background-color: #{{ intf.cable.color }}{% endif %}"
+                                        style="grid-area: {{ intf.stylename }}
+                                        {% if cable_colors == 'Cable' and intf.cable and intf.cable.color %}
+                                            ; background-color: #{{ intf.cable.color }}
+                                        {% elif cable_colors == 'PoE' %}
+                                            {% if intf.poe_mode or intf.poe_type %}
+                                                ; background-color: orange /* Or your desired PoE color */
+                                            {% else %}
+                                                ; background-color: lightgrey /* Or your desired non-PoE color */
+                                            {% endif %}
+                                        {% elif cable_colors == 'VLAN Role' and intf.vlan_role_color %}
+                                            ; background-color: #{{ intf.vlan_role_color }}
+                                        {% endif %}"
                                         data-bs-toggle="tooltip"
                                         data-bs-html="true"
                                         data-bs-custom-class="device-view-tooltip"
@@ -306,9 +320,15 @@
                     <option value="type" {% if port_type == "type" %}selected{% endif %}>Type</option>
                 </select>
             </div>
-            <div class="form-check mt-2">
-                <input onChange="this.form.submit()" type="checkbox" name="cable_colors" id="cable_colors" class="form-check-input" {% if cable_colors == "on" %}checked{% endif %} />
-                <label for="cable_colors" class="form-check-label">Cable Colors</label>
+            <div class="form-group mt-2">
+                <label for="cable_colors" class="form-check-label mb-1">Cable Colors</label>
+                <select name="cable_colors" id="cable_colors" class="form-select form-select-sm mb-2" onChange="this.form.submit()">
+                    <option value="None" {% if cable_colors == "None" %}selected{% endif %}>None</option>
+                    <option value="Cable" {% if cable_colors == "Cable" %}selected{% endif %}>Cable</option>
+                    <option value="Status" {% if cable_colors == "Status" %}selected{% endif %}>Status</option>
+                    <option value="PoE" {% if cable_colors == "PoE" %}selected{% endif %}>PoE</option>
+                    <option value="VLAN Role" {% if cable_colors == "VLAN Role" %}selected{% endif %}>VLAN Role</option>
+                </select>
             </div>
             <div class="form-group mt-2">
                 <label for="link_type" class="form-check-label mb-1">Port Link</label>
