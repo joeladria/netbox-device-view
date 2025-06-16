@@ -50,20 +50,27 @@ class DeviceDeviceView(generic.ObjectView):
 
     def get_extra_context(self, request, instance):
         dv, modules, ports_chassis = prepare(instance)
-        height = (
-            instance.device_type.u_height * 2 * 20 + instance.device_type.u_height * 2
-        )
+        display_size_param = request.GET.get("display_size", "medium")
+        if display_size_param == "small":
+            display_cell_size = 20
+        elif display_size_param == "large":
+            display_cell_size = 60  # Changed from 80 to 60
+        else:  # medium or default
+            display_cell_size = 40
+        
+        render_height = instance.device_type.u_height * 2 * display_cell_size + instance.device_type.u_height * 2
+        
         return {
             "device_view": models.DeviceView.objects.filter(
                 device_type=instance.device_type
             ).first(),
             "dv": dv,
             "modules": modules,
-            "height": height,
+            "render_height": render_height,
             "ports_chassis": ports_chassis,
             "cable_colors": request.GET.get("cable_colors", "None"),
             "port_type": request.GET.get("port_type", "vlan_letter"),
-            "display_size": request.GET.get("display_size", "large"),
+            "display_size": display_size_param,
             "link_type": request.GET.get("link_type", "trace"),
             "something_else": request.GET.get("something_else", "off"),
         }
@@ -127,16 +134,21 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
         # Further filter devices_to_display
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
 
+        display_size_param = request.GET.get("display_size", "medium")
 
         for device in devices_with_view_defined[:50]: # Limit to 50 devices
             instance_id = f"dev-{device.pk}"
             dv_css_map, modules_map, ports_chassis_map = prepare(device, instance_prefix=instance_id)
             
             if dv_css_map is not None:
-                # Standard height calculation (for 20px cell size)
-                height_small = device.device_type.u_height * 2 * 20 + device.device_type.u_height * 2
-                # Height calculation for large display (for 40px cell size)
-                height_large = device.device_type.u_height * 2 * 40 + device.device_type.u_height * 2
+                if display_size_param == "small":
+                    display_cell_size = 20
+                elif display_size_param == "large":
+                    display_cell_size = 60  # Changed from 80 to 60
+                else:  # medium or default
+                    display_cell_size = 40
+                
+                device_render_height = device.device_type.u_height * 2 * display_cell_size + device.device_type.u_height * 2
                 
                 prepared_devices_data.append({
                     'device_obj': device,
@@ -144,8 +156,7 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
                     'dv_css_map': dv_css_map,
                     'modules_map': modules_map,
                     'ports_chassis_map': ports_chassis_map,
-                    'height': height_small, # Default height for 'small' or if not specified
-                    'height_large': height_large # Specific height for 'large'
+                    'device_render_height': device_render_height
                 })
         
         return render(request, 'netbox_device_view/device_elevation.html', {
@@ -160,6 +171,6 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             # Pass query params to template for potential use in regenerating links or options
             'cable_colors': request.GET.get("cable_colors", "None"),
             'port_type': request.GET.get("port_type", "vlan_letter"),
-            'display_size': request.GET.get("display_size", "large"), # Or a default for multi-view
+            'display_size': display_size_param,
             'link_type': request.GET.get("link_type", "trace"),
         })

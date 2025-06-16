@@ -37,17 +37,23 @@
     /* Individual device view height, prefixed by instance_id */
     {% for data in prepared_devices %}
     .{{ data.instance_id }} .deviceview {
-        height: {{ data.height }}px; /* Default height for small display */
-        /* Default display_size to small for multi-view, or make it configurable */
+        height: {{ data.device_render_height }}px; /* Dynamic height */
+        {% if display_size == "small" %}
+            grid-auto-columns: 20px;
+            grid-auto-rows: 20px;
+        {% elif display_size == "medium" %}
+            grid-auto-columns: 40px;
+            grid-auto-rows: 40px;
+            width: 1404px; 
+        {% elif display_size == "large" %}
+            grid-auto-columns: 60px; /* Changed from 80px to 60px */
+            grid-auto-rows: 60px; /* Changed from 80px to 60px */
+            width: 2106px; /* Changed from 2808px to 2106px (60/80 * 2808) */
+        {% else %} /* Default to medium styling if display_size is somehow unset or unexpected */
+            grid-auto-columns: 40px;
+            grid-auto-rows: 40px;
+        {% endif %}
     }
-    {% if display_size == "large" %}
-    .{{ data.instance_id }} .deviceview { 
-		grid-auto-columns: 40px;
-		grid-auto-rows: 40px;
-		height: {{ data.height_large }}px; /* Use dynamic large height */
-		width: 1404px; /* Use user-suggested width */
-	}
-    {% endif %}
     {% endfor %}
 </style>
 {% endblock %}
@@ -263,7 +269,7 @@
                                         {% endif %}
                                     {% endif %}
                                     
-                                    {% if display_size == "large" and intf.name %}
+                                    {% if display_size == "medium" or display_size == "large" and intf.name %}
                                         {% with last_segment=intf.name|split:"/"|last %}
                                             <p class="text-white" style="font-size: 60%; margin:0; line-height:1;">
                                                 {% for char_code in last_segment %}
@@ -305,6 +311,7 @@
                 <label for="display_size" class="form-check-label mb-1">Display Size</label>
                 <select name="display_size" id="display_size" class="form-select form-select-sm mb-2" onChange="this.form.submit()">
                     <option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
+                    <option value="medium" {% if display_size == "medium" %}selected{% endif %}>Medium</option>
                     <option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
                 </select>
             </div>

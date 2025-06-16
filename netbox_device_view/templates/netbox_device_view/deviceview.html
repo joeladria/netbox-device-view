@@ -15,18 +15,22 @@
 	{{ ddv }}
 	{% endfor %}
 	{% endautoescape %}
-	{% if height %}
-	
+	{% if render_height %}
 	.deviceview {
-		height:{{ height }}px;
+		height:{{ render_height }}px;
 	}
 	{% endif %}
-	{% if display_size == "large" %}
+	{% if display_size == "medium" %}
 	.deviceview { 
 		grid-auto-columns: 40px;
 		grid-auto-rows: 40px;
-		height: 84px;
-		width: 1404px;
+		/* height: 84px; */ /* Removed fixed height, render_height will control */
+		/* width: 1404px; */ /* Removed fixed width */
+	}
+	{% elif display_size == "large" %}
+	.deviceview { 
+		grid-auto-columns: 60px; /* Changed from 80px to 60px */
+		grid-auto-rows: 60px; /* Changed from 80px to 60px */
 	}
 	{% endif %}
 </style>
@@ -176,7 +180,7 @@
 			{% endif %}
 			
 			<!-- large view displays port number, or maybe label-->
-			{% if display_size == "large" %}
+			{% if display_size == "medium" or display_size == "large" %}
 				{% with last_segment=int.name|split:"/"|last %}
 					<p class="text-white">
 						{% for char in last_segment %}
@@ -204,6 +208,7 @@
 				<label for="form-check-label" class="mb-2">Display Size</label>
 				<select name="display_size" id="display_size" class="form-control mb-3" onChange="this.form.submit()">
 					<option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
+					<option value="medium" {% if display_size == "medium" %}selected{% endif %}>Medium</option>
 					<option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
 				</select>
 				<label for="form-check-label" class="mb-2">Port Display</label>

@@ -12,7 +12,7 @@
 	min-height: 0;
 	min-width: 0;
 	height: 42px;
-	width: 702px;
+	 width: 702px; /* Removed fixed width to allow dynamic scaling */
 	margin: auto;
 	overflow: hidden;
 }
