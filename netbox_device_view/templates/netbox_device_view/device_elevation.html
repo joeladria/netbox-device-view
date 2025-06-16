@@ -20,7 +20,7 @@
     .multi-device-container {
         display: flex;
         flex-direction: column;
-        gap: 30px; /* Space between device views */
+        gap: 10px; /* Space between device views */
     }
     .device-instance-wrapper {
         border: 1px solid #dee2e6; /* NetBox standard border color */
@@ -37,15 +37,15 @@
     /* Individual device view height, prefixed by instance_id */
     {% for data in prepared_devices %}
     .{{ data.instance_id }} .deviceview {
-        height: {{ data.height }}px;
+        height: {{ data.height }}px; /* Default height for small display */
         /* Default display_size to small for multi-view, or make it configurable */
     }
     {% if display_size == "large" %}
     .{{ data.instance_id }} .deviceview { 
 		grid-auto-columns: 40px;
 		grid-auto-rows: 40px;
-		/* height: 84px; */ /* Height is per device_type U height */
-		/* width: 1404px; */ /* Width might need to be more dynamic or removed for multi-view */
+		height: {{ data.height_large }}px; /* Use dynamic large height */
+		width: 1404px; /* Use user-suggested width */
 	}
     {% endif %}
     {% endfor %}

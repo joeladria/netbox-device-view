@@ -63,7 +63,7 @@ class DeviceDeviceView(generic.ObjectView):
             "ports_chassis": ports_chassis,
             "cable_colors": request.GET.get("cable_colors", "off"),
             "port_type": request.GET.get("port_type", "status"),
-            "display_size": request.GET.get("display_size", "small"),
+            "display_size": request.GET.get("display_size", "large"),
             "link_type": request.GET.get("link_type", "trace"),
             "something_else": request.GET.get("something_else", "off"),
         }
@@ -132,14 +132,20 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             instance_id = f"dev-{device.pk}"
             dv_css_map, modules_map, ports_chassis_map = prepare(device, instance_prefix=instance_id)
             
-            if dv_css_map is not None: 
+            if dv_css_map is not None:
+                # Standard height calculation (for 20px cell size)
+                height_small = device.device_type.u_height * 2 * 20 + device.device_type.u_height * 2
+                # Height calculation for large display (for 40px cell size)
+                height_large = device.device_type.u_height * 2 * 40 + device.device_type.u_height * 2
+                
                 prepared_devices_data.append({
                     'device_obj': device,
                     'instance_id': instance_id,
                     'dv_css_map': dv_css_map,
                     'modules_map': modules_map,
                     'ports_chassis_map': ports_chassis_map,
-                    'height': device.device_type.u_height * 2 * 20 + device.device_type.u_height * 2
+                    'height': height_small, # Default height for 'small' or if not specified
+                    'height_large': height_large # Specific height for 'large'
                 })
         
         return render(request, 'netbox_device_view/device_elevation.html', {
@@ -154,6 +160,6 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             # Pass query params to template for potential use in regenerating links or options
             'cable_colors': request.GET.get("cable_colors", "off"),
             'port_type': request.GET.get("port_type", "status"),
-            'display_size': request.GET.get("display_size", "small"), # Or a default for multi-view
+            'display_size': request.GET.get("display_size", "large"), # Or a default for multi-view
             'link_type': request.GET.get("link_type", "trace"),
         })
