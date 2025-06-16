@@ -54,6 +54,11 @@
 </style>
 {% endblock %}
 {% block content %}
+<div class="clearfix mb-2">
+    <a href="{% url 'plugins:netbox_device_view:device_elevation' %}?site_slug={{ object.site.slug }}" class="btn btn-sm btn-primary float-end">
+        <i class="mdi mdi-arrow-right-bold"></i> Show All Switches
+    </a>
+</div>
 <div class="card">
 	<div class="card-body htmx-container">
 		{% spaceless %} {% for device_key, interfaces_list in ports_chassis.items %} Device
