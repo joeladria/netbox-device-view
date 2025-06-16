@@ -50,7 +50,7 @@ class DeviceDeviceView(generic.ObjectView):
 
     def get_extra_context(self, request, instance):
         dv, modules, ports_chassis = prepare(instance)
-        display_size_param = request.GET.get("display_size", "medium")
+        display_size_param = request.GET.get("display_size", "large")
         if display_size_param == "small":
             display_cell_size = 20
         elif display_size_param == "large":
@@ -68,10 +68,10 @@ class DeviceDeviceView(generic.ObjectView):
             "modules": modules,
             "render_height": render_height,
             "ports_chassis": ports_chassis,
-            "cable_colors": request.GET.get("cable_colors", "None"),
+            "cable_colors": request.GET.get("cable_colors", "vlan_role"),
             "port_type": request.GET.get("port_type", "vlan_letter"),
             "display_size": display_size_param,
-            "link_type": request.GET.get("link_type", "trace"),
+            "link_type": request.GET.get("link_type", "interface"),
             "something_else": request.GET.get("something_else", "off"),
         }
 
@@ -134,7 +134,7 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
         # Further filter devices_to_display
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
 
-        display_size_param = request.GET.get("display_size", "medium")
+        display_size_param = request.GET.get("display_size", "large")
 
         for device in devices_with_view_defined[:50]: # Limit to 50 devices
             instance_id = f"dev-{device.pk}"
@@ -169,8 +169,8 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             'selected_site_slug': site_slug,
             'selected_rack_id': int(rack_id) if rack_id else None,
             # Pass query params to template for potential use in regenerating links or options
-            'cable_colors': request.GET.get("cable_colors", "None"),
+            'cable_colors': request.GET.get("cable_colors", "vlan_role"),
             'port_type': request.GET.get("port_type", "vlan_letter"),
             'display_size': display_size_param,
-            'link_type': request.GET.get("link_type", "trace"),
+            'link_type': request.GET.get("link_type", "interface"),
         })
