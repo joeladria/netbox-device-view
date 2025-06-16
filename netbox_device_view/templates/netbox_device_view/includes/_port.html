@@ -1,0 +1,181 @@
+{% comment %}
+Reusable template for rendering a single port.
+Expects:
+- port: The interface/port object.
+- link_type: Current link type selection.
+- cable_colors: Current cable_colors selection.
+- port_type: Current port_type selection (for content).
+- display_size: Current display_size selection.
+{% endcomment %}
+<a
+    {% if link_type == "host" and port.connected_endpoints|length > 0 %}
+        {% for ce in port.connected_endpoints %}
+        href="{{ ce.device.get_absolute_url }}"
+        {% endfor %}
+    {% elif link_type == "trace" and port.get_absolute_url %}
+    href="{{ port.get_absolute_url }}trace/"
+    {% elif port.get_absolute_url %}
+    href="{{ port.get_absolute_url }}"
+    {% else %}
+    href="#" {# Fallback if no URL, e.g. for non-interface port types #}
+    {% endif %}
+    class="device-view-port
+    {% if cable_colors == "Cable" %}
+        {% if not port.cable or not port.cable.color %}
+            nocolor
+        {% endif %}
+    {% elif cable_colors == "Status" or cable_colors == "None" %}
+        {% if port.enabled and port.connected_endpoints|length > 0 or port.is_port and port.link_peers|length > 0 %}
+            bg-success
+        {% elif port.enabled %}
+            bg-secondary
+        {% else %}
+            bg-danger
+        {% endif %}
+    {% endif %}
+    {% if port.untagged_vlan and cable_colors != "vlan_role" %}
+        vlan-{{ port.untagged_vlan.vid }}
+    {% endif %}"
+    title="{{ port.name }}
+    {% if port.connected_endpoints|length > 0 %}<hr>
+        {% for ce in port.connected_endpoints %}
+        {{ ce.device }} | {{ ce.name }}<br>
+        {% endfor %}
+    {% elif port.link_peers|length > 0 %}<hr>
+        {% for lp in port.link_peers %}
+        {% if lp.device %}
+        {{ lp.device }} | {{ lp.name }}<br>
+        {% elif lp.circuit %}
+        {{ lp }}<br>
+        {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if cable_colors == 'vlan_role' %}<hr>VLAN Role Debug:<br>Role: {{ port.debug_vlan_role_name | default:"N/A" }}<br>Tag: {{ port.debug_vlan_role_tag_name | default:"N/A" }}<br>Color: {{ port.debug_vlan_role_tag_color | default:"N/A" }}{% endif %}
+    "
+    style="grid-area: {{ port.stylename }}
+    {% if cable_colors == 'Cable' and port.cable and port.cable.color %}
+        ; background-color: #{{ port.cable.color }}
+    {% elif cable_colors == 'PoE' %}
+        {% if port.poe_mode or port.poe_type %}
+            ; background-color: orange /* Or your desired PoE color */
+        {% else %}
+            ; background-color: lightgrey /* Or your desired non-PoE color */
+        {% endif %}
+    {% elif cable_colors == 'vlan_role' and port.vlan_role_color %}
+        ; background-color: #{{ port.vlan_role_color }}
+    {% endif %}"
+    data-bs-toggle="tooltip"
+    data-bs-html="true"
+    data-bs-custom-class="device-view-tooltip"
+>
+{% if display_size == "large" %}
+    {# Line 1: VLAN Info #}
+    <span class="text-white port-info-large">
+        {% if port.mode == "access" and port.untagged_vlan and port.untagged_vlan.name %}
+            {{ port.untagged_vlan.name|slice:":1"|upper }}
+        {% elif port.mode == "tagged" %}<i class="mdi mdi-tag"></i>
+        {% elif port.mode == "tagged-all" %}<i class="mdi mdi-tag-multiple"></i>
+        {% else %}&nbsp;{% endif %}
+    </span>
+    {# Line 2: Port Number #}
+    <span class="text-white port-info-large">
+        {% with port_num_raw=port.name|split:"/"|last %}
+            {% for char_pn in port_num_raw %}{% if char_pn in "0123456789" %}{{ char_pn }}{% endif %}{% endfor %}
+        {% endwith %}
+    </span>
+    {# Line 3: Host Name #}
+    <span class="text-white port-info-large">
+        {% if port.connected_endpoints.0 %}{{ port.connected_endpoints.0.device.name|truncatechars:8 }}{% else %}&nbsp;{% endif %}
+    </span>
+    {# Line 4: Host Interface #}
+    <span class="text-white port-info-large">
+        {% if port.connected_endpoints.0 %}{{ port.connected_endpoints.0.name|truncatechars:8 }}{% else %}&nbsp;{% endif %}
+    </span>
+{% else %}
+    {% if port_type == "status" %}
+        {% if port.enabled and port.connected_endpoints|length > 0  or port.is_port and port.link_peers|length > 0 %}
+        <span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+        {% elif port.enabled %}
+        <span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+        {% else %}
+        <span class="text-white"><i class="mdi mdi-close-thick"></i></span>
+        {% endif %}
+
+    {% elif port_type == "vlan" %}
+        {% if port.mode == "access" %}
+            {% if port.untagged_vlan and port.untagged_vlan.name %}
+                <span class="text-white">{{ port.untagged_vlan.name|slice:":1"|upper }}</span>
+            {% endif %}					
+        {% elif port.mode == "tagged" %}
+            <span class="text-white"><i class="mdi mdi-tag"></i></span>
+        {% elif port.mode == "tagged-all" %}
+            <span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+        {% endif %}
+
+    {% elif port_type == "vlanid" %}
+        {% if port.mode == "access" %}
+            {% if port.untagged_vlan %}
+            <span class="text-white">{{ port.untagged_vlan.vid }}</span>
+            {% endif %}					
+        {% elif port.mode == "tagged" %}
+            <span class="text-white"><i class="mdi mdi-tag"></i></span>
+        {% elif port.mode == "tagged-all" %}
+            <span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+        {% endif %}				
+    
+    {% elif port_type == "poe" %}
+        {% if port.poe_mode or port.poe_type %}
+        <span class="text-white"><i class="mdi mdi-power-plug"></i></span>
+        {% else %}
+        <span class="text-white"><i class="mdi mdi-power-plug-off"></i></span>
+        {% endif %}
+
+    {% elif port_type == "label" %}
+        {% if port.label %}
+        <code class="text-white" style="font-size:75%">
+            {{ port.label }}
+        </code>
+        {% endif %}
+        
+    {% elif port_type == "host" %}
+        {% if port.connected_endpoints|length > 0 %}
+        {% for ce in port.connected_endpoints %}
+            {% if ce.device and ce.device.name %}
+            <code class="text-white" style="font-size:75%">
+                {{ ce.device.name|split:"-"|last }}
+            </code>
+            {% endif %}
+        {% endfor %}
+        {% else %}
+        <span class="text-white"><i class="mdi mdi-help"></i></span>
+        {% endif %}
+
+    {% elif port_type == "type" %}
+        {% if 'base-t' in port.type %}
+            <span class="text-white"><i class="mdi mdi-ethernet"></i></span>
+        {% elif 'base-x' in port.type or 'sfp' in port.type or 'qsfp' in port.type or 'pon' in port.type or 'oc' in port.type or 'fc' in port.type or 'xfp' in port.type or 'cfc' in port.type %} {# Added xfp, cfc from elevation #}
+            <span class="text-white"><i class="mdi mdi-laser-pointer"></i></span>
+        {% elif 'ieee802' in port.type or 'gsm' in port.type or 'cdma' in port.type or 'lte' in port.type or '4g' in port.type or '5g' in port.type or 'wireless' in port.type %} {# Added gsm,cdma,lte,4g,5g from elevation #}
+            <span class="text-white"><i class="mdi mdi-wifi"></i></span>
+        {% elif 'stackwise' in port.type or 'summitstack' in port.type or 'vcp' in port.type %}
+            <span class="text-white"><i class="mdi mdi-cable-data"></i></span>
+        {% else %}
+            <span class="text-white"><i class="mdi mdi-help"></i></span>
+        {% endif %}
+        
+    {% endif %}
+    
+    {# medium view displays port number #}
+    {% if display_size == "medium" and port.name %}
+        {% with last_segment=port.name|split:"/"|last %}
+            <p class="text-white" style="font-size: 60%; margin:0; line-height:1; margin-top: auto;">
+                {% for char_code in last_segment %}
+                    {% if char_code >= "0" and char_code <= "9" %}
+                        {{ char_code }}
+                    {% endif %}
+                {% endfor %}
+            </p>
+        {% endwith %}
+    {% endif %}
+{% endif %}
+</a>

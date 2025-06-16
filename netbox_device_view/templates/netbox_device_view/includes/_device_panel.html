@@ -1,0 +1,18 @@
+{% comment %}
+Reusable template for rendering a single device panel.
+Expects:
+- device_identifier: The device PK or VC position string (key for modules and ports_chassis).
+- all_modules_data: The complete 'modules' dictionary from the view, keyed by device_identifier.
+- interfaces_for_panel: List of interface/port objects for this panel.
+- link_type: Current link type selection.
+- cable_colors: Current cable_colors selection.
+- port_type: Current port_type selection.
+- display_size: Current display_size selection.
+{% endcomment %}
+<div
+    class="deviceview area d{{ device_identifier }}{% for mod_key, modules_list_for_key in all_modules_data.items %}{% if mod_key == device_identifier %}{% for module_item in modules_list_for_key %} module{{ module_item.module_type.model }}{% endfor %}{% endif %}{% endfor %}"
+>
+    {% for p_object in interfaces_for_panel %}
+        {% include 'netbox_device_view/includes/_port.html' with port=p_object link_type=link_type cable_colors=cable_colors port_type=port_type display_size=display_size %}
+    {% endfor %}
+</div>
