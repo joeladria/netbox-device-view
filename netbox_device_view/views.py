@@ -61,8 +61,8 @@ class DeviceDeviceView(generic.ObjectView):
             "modules": modules,
             "height": height,
             "ports_chassis": ports_chassis,
-            "cable_colors": request.GET.get("cable_colors", "off"),
-            "port_type": request.GET.get("port_type", "status"),
+            "cable_colors": request.GET.get("cable_colors", "None"),
+            "port_type": request.GET.get("port_type", "vlan_letter"),
             "display_size": request.GET.get("display_size", "large"),
             "link_type": request.GET.get("link_type", "trace"),
             "something_else": request.GET.get("something_else", "off"),
@@ -158,8 +158,8 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             'selected_site_slug': site_slug,
             'selected_rack_id': int(rack_id) if rack_id else None,
             # Pass query params to template for potential use in regenerating links or options
-            'cable_colors': request.GET.get("cable_colors", "off"),
-            'port_type': request.GET.get("port_type", "status"),
+            'cable_colors': request.GET.get("cable_colors", "None"),
+            'port_type': request.GET.get("port_type", "vlan_letter"),
             'display_size': request.GET.get("display_size", "large"), # Or a default for multi-view
             'link_type': request.GET.get("link_type", "trace"),
         })
