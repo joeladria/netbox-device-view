@@ -9,6 +9,7 @@ from django.apps import apps
 from django.views import View as DjangoView
 import pprint
 
+# from netbox.views.generic import View as NetBoxView # Ensure this or similar is available if generic.View is not the one
 from netbox.views.generic import BulkImportView
 from .forms import DeviceViewImportForm
 
@@ -79,7 +80,10 @@ class DeviceDeviceView(generic.ObjectView):
         return Device.objects.get(pk=kwargs.get("pk"))
 
 
-class DeviceElevationView(DjangoView):
+class DeviceElevationView(generic.View):
+    permission_required = 'dcim.view_device'
+    template_name = 'netbox_device_view/device_elevation.html' # Good practice
+
     def get(self, request):
         site_slug = request.GET.get('site_slug')
         rack_id = request.GET.get('rack_id')
