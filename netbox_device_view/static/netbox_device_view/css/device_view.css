@@ -45,6 +45,54 @@
 	max-width: 300px;
 }
 
+.port-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes port number to bottom if space allows */
+    align-items: center; /* Centers items horizontally */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.port-line {
+    display: block; /* Each line takes full width available in its context */
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.port-line-display-option {
+    font-size: 1.1em; /* Slightly larger font for the main display option */
+    font-weight: bold;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.port-line-hostname,
+.port-line-interface {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; /* Sans-serif monospace */
+    font-size: 0.85em;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.port-line-number {
+    border: 1px solid #777; /* Box border for port number */
+    padding: 0px 2px;      /* Small padding */
+    margin-top: auto;      /* Pushes to the bottom */
+    align-self: center;  /* Center itself if it's narrower than container */
+    line-height: 1.2;
+    font-size: 0.8em;
+    background-color: rgba(0,0,0,0.1); /* Slight background to distinguish */
+    border-radius: 2px;
+    flex-shrink: 0; /* Prevent shrinking */
+    max-width: 90%; /* Ensure it doesn't overflow too much */
+    box-sizing: border-box;
+}
+
 .device-view-port.nocolor {
 	background: repeating-linear-gradient(
 					-45deg,
