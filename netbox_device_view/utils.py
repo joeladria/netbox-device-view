@@ -1,8 +1,8 @@
 from dcim.models import ConsolePort
 from .models import DeviceView
 from django.core.exceptions import ObjectDoesNotExist
-from django.apps import apps # Added for getting DeviceView model reliably
-from extras.models import Tag # Added Tag import
+from django.apps import apps
+from extras.models import Tag
 
 import re
 
@@ -12,28 +12,20 @@ def process_interfaces(interfaces, ports_chassis, dev):
         for itf in interfaces:
             if itf.type == "virtual" or itf.type == "lag":
                 continue
-            # Convert to lowercase and replace common separators with hyphens
-            # This replaces the original regex matching and if/else block
             stylename = re.sub(r"[/\.\s\+]+", "-", itf.name.lower())
 
-            # Clean up multiple hyphens and leading/trailing hyphens
             stylename = re.sub(r"-+", "-", stylename).strip("-")
 
-            # If the name becomes empty after cleaning, use a fallback
             if not stylename:
-                stylename = f"iface-{itf.pk}"  # Use a unique fallback
+                stylename = f"iface-{itf.pk}"
 
-            # Assign the generated stylename back to the object property
             itf.stylename = stylename
 
-            # Check if the stylename exists and starts with a digit or a hyphen
-            # This replaces the original 'if itf.stylename.isdigit():' line
             if itf.stylename and (
                 itf.stylename[0].isdigit() or itf.stylename[0] == "-"
             ):
                 itf.stylename = f"p{itf.stylename}"
 
-            # Add VLAN role color logic & debug attributes for interfaces
             itf.vlan_role_color = None
             itf.debug_vlan_role_tag_name = "N/A"
             itf.debug_vlan_role_tag_color = "N/A"
@@ -45,7 +37,6 @@ def process_interfaces(interfaces, ports_chassis, dev):
             else:
                 itf.debug_vlan_role_name = itf.untagged_vlan.role.name
                 try:
-                    # Use the related manager 'tags.all()' for the VLANRole instance
                     role_tags = itf.untagged_vlan.role.tags.all()
                     found_tag = False
                     for tag in role_tags:
@@ -54,18 +45,17 @@ def process_interfaces(interfaces, ports_chassis, dev):
                             itf.debug_vlan_role_tag_name = tag.name
                             itf.debug_vlan_role_tag_color = f"#{tag.color}"
                             found_tag = True
-                            break # Use the first tag with a color
+                            break
                     if not found_tag and role_tags:
                         itf.debug_vlan_role_tag_name = f"Found {len(role_tags)} tag(s), none with color"
                     elif not role_tags:
                         itf.debug_vlan_role_tag_name = "No tags on role"
                 except Exception as e:
                     error_message = str(e)
-                    # Simplify common long error messages for display
                     if "managerfromrestrictedqueryset" in error_message.lower():
                         error_message = "Permission error fetching tags."
                     print(f"Error looking up tag for VLAN role on interface {itf.name}: {e}")
-                    itf.debug_vlan_role_tag_name = f"Error: {error_message[:50]}" # Truncate long errors
+                    itf.debug_vlan_role_tag_name = f"Error: {error_message[:50]}"
 
             if dev not in ports_chassis:
                 ports_chassis[dev] = []
@@ -83,11 +73,10 @@ def process_ports(ports, ports_chassis, dev):
             if port.stylename.isdigit():
                 port.stylename = f"p{port.stylename}"
 
-            # Initialize debug attributes for non-interface ports to ensure they exist for the template
             port.debug_vlan_role_name = "N/A (Not an Interface)"
             port.debug_vlan_role_tag_name = "N/A"
             port.debug_vlan_role_tag_color = "N/A"
-            port.vlan_role_color = None # Ensure this is also initialized for non-interfaces
+            port.vlan_role_color = None
 
             if dev not in ports_chassis:
                 ports_chassis[dev] = []
@@ -95,7 +84,7 @@ def process_ports(ports, ports_chassis, dev):
     return ports_chassis
 
 
-def prepare(obj, instance_prefix=None): # Added instance_prefix argument
+def prepare(obj, instance_prefix=None):
     ports_chassis = {}
     dv = {}
     modules = {}
@@ -133,19 +122,12 @@ def prepare(obj, instance_prefix=None): # Added instance_prefix argument
             )
         else:
             for member in obj.virtual_chassis.members.all():
-                # For virtual chassis members, the existing logic for namespacing might be sufficient,
-                # or it might also need to incorporate the instance_prefix if a VC master is part of a multi-device view.
-                # For now, keeping the original VC logic, assuming instance_prefix is mainly for distinct devices on the new page.
-                # If a VC itself is shown on the multi-device page, its internal members are already handled by 'd' + vc_position.
-                # The instance_prefix would apply to the VC as a whole.
-
                 member_device_view_instance = device_view_model.objects.get(device_type=member.device_type)
                 member_grid_css = member_device_view_instance.grid_template_area
                 
-                # Apply VC internal prefix
                 processed_member_grid_css = member_grid_css.replace(".area", ".area.d" + str(member.vc_position))
 
-                if instance_prefix: # If the whole VC is on a multi-device page, prefix its already VC-namespaced CSS
+                if instance_prefix:
                     prefixed_css_lines = []
                     for line in processed_member_grid_css.splitlines():
                         stripped_line = line.strip()
@@ -161,7 +143,7 @@ def prepare(obj, instance_prefix=None): # Added instance_prefix argument
 
                 modules[member.vc_position] = member.modules.all()
                 ports_chassis = process_interfaces(
-                    member.interfaces.all(), ports_chassis, member.vc_position # Using vc_position as key for ports_chassis
+                    member.interfaces.all(), ports_chassis, member.vc_position
                 )
                 ports_chassis = process_ports(
                     ConsolePort.objects.filter(device_id=member.id),

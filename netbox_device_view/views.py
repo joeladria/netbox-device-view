@@ -1,16 +1,16 @@
 from netbox.views import generic
-from dcim.models import Device, Site, Rack # Added Site and Rack
+from dcim.models import Device, Site, Rack
 from . import forms, models, tables, filtersets
 from utilities.views import ViewTab, register_model_view
 from .utils import prepare
 from django.http import HttpResponse
-from django.shortcuts import render # Added render
-from django.apps import apps # Added apps
-from django.views import View as DjangoView # Added DjangoView import
+from django.shortcuts import render
+from django.apps import apps
+from django.views import View as DjangoView
 import pprint
 
 from netbox.views.generic import BulkImportView
-from .forms import DeviceViewImportForm # Changed to relative import
+from .forms import DeviceViewImportForm
 
 
 class DeviceViewView(generic.ObjectView):
@@ -54,7 +54,7 @@ class DeviceDeviceView(generic.ObjectView):
         if display_size_param == "small":
             display_cell_size = 20
         elif display_size_param == "large":
-            display_cell_size = 60  # Changed from 80 to 60
+            display_cell_size = 60
         else:  # medium or default
             display_cell_size = 40
         
@@ -79,14 +79,14 @@ class DeviceDeviceView(generic.ObjectView):
         return Device.objects.get(pk=kwargs.get("pk"))
 
 
-class DeviceElevationView(DjangoView): # Changed to DjangoView
+class DeviceElevationView(DjangoView):
     def get(self, request):
         site_slug = request.GET.get('site_slug')
         rack_id = request.GET.get('rack_id')
         
         devices_to_display = Device.objects.none()
-        site = None # Initialize site
-        rack = None # Initialize rack
+        site = None
+        rack = None
         
         all_sites = Site.objects.all()
         racks_for_dropdown = Rack.objects.none()
@@ -99,44 +99,37 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
                 )
                 racks_for_dropdown = Rack.objects.filter(site=site)
             except Site.DoesNotExist:
-                site_slug = None # Clear invalid site slug
-                racks_for_dropdown = Rack.objects.all() # Show all racks if site is invalid
-                pass 
+                site_slug = None
+                racks_for_dropdown = Rack.objects.all()
+                pass
         elif rack_id:
             try:
                 rack = Rack.objects.get(pk=rack_id)
                 devices_to_display = Device.objects.filter(rack=rack).prefetch_related(
                     'device_type', 'modules', 'interfaces', 'frontports', 'rearports', 'virtual_chassis__members'
                 )
-                # If a rack is selected, we might still want to show its site's racks or all racks
-                # For simplicity now, if rack is chosen directly, site context for dropdown might not be primary
                 if rack.site:
                     racks_for_dropdown = Rack.objects.filter(site=rack.site)
-                    site = rack.site # Set current site based on selected rack
+                    site = rack.site
                 else:
-                    racks_for_dropdown = Rack.objects.all() # Or just this rack, or all racks
+                    racks_for_dropdown = Rack.objects.all()
             except Rack.DoesNotExist:
-                rack_id = None # Clear invalid rack id
+                rack_id = None
                 racks_for_dropdown = Rack.objects.all()
                 pass
-        else: # Neither site_slug nor rack_id provided
+        else:
             racks_for_dropdown = Rack.objects.all()
 
 
         prepared_devices_data = []
-        # Use the existing models import
-        # device_view_model = apps.get_model('netbox_device_view', 'DeviceView')
         
-        # Filter for devices that actually have a DeviceView definition for their type
-        # This requires getting the device_type IDs for which a DeviceView exists
         device_types_with_view = models.DeviceView.objects.values_list('device_type_id', flat=True)
         
-        # Further filter devices_to_display
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
 
         display_size_param = request.GET.get("display_size", "large")
 
-        for device in devices_with_view_defined[:50]: # Limit to 50 devices
+        for device in devices_with_view_defined[:50]:
             instance_id = f"dev-{device.pk}"
             dv_css_map, modules_map, ports_chassis_map = prepare(device, instance_prefix=instance_id)
             
@@ -144,7 +137,7 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
                 if display_size_param == "small":
                     display_cell_size = 20
                 elif display_size_param == "large":
-                    display_cell_size = 60  # Changed from 80 to 60
+                    display_cell_size = 60
                 else:  # medium or default
                     display_cell_size = 40
                 
@@ -168,7 +161,6 @@ class DeviceElevationView(DjangoView): # Changed to DjangoView
             'racks_for_dropdown': racks_for_dropdown,
             'selected_site_slug': site_slug,
             'selected_rack_id': int(rack_id) if rack_id else None,
-            # Pass query params to template for potential use in regenerating links or options
             'cable_colors': request.GET.get("cable_colors", "vlan_role"),
             'port_type': request.GET.get("port_type", "vlan_letter"),
             'display_size': display_size_param,

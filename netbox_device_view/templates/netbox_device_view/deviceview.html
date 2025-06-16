@@ -24,24 +24,21 @@
 	.deviceview { 
 		grid-auto-columns: 40px;
 		grid-auto-rows: 40px;
-		width: 1404px; /* Added fixed width for medium size */
+		width: 1404px;
 	}
 	{% elif display_size == "large" %}
 	.deviceview { 
-		grid-auto-columns: 60px; /* Changed from 80px to 60px */
-		grid-auto-rows: 60px; /* Changed from 80px to 60px */
-		width: 2106px; /* Changed from max-content to fixed width */
+		grid-auto-columns: 60px;
+		grid-auto-rows: 60px;
+		width: 2106px;
 	}
 	.port-info-large {
 		font-size: 9px; 
 		line-height: 1.1; 
 		display: block; 
-		/* max-width: 58px; */ /* Temporarily comment out */
-		/* overflow: hidden; */ /* Temporarily comment out */
 		text-overflow: ellipsis; /* Depends on overflow: hidden */
 		white-space: nowrap; 
 		text-align: center; 
-		/* color: black !important; */ /* For debugging color issues, if needed */
 	}
 	.device-view-port { /* Ensure this applies to the <a> tag */
 		display: flex;
