@@ -32,6 +32,24 @@
 		grid-auto-columns: 60px; /* Changed from 80px to 60px */
 		grid-auto-rows: 60px; /* Changed from 80px to 60px */
 	}
+	.port-info-large {
+		font-size: 9px; 
+		line-height: 1.1; 
+		display: block; 
+		/* max-width: 58px; */ /* Temporarily comment out */
+		/* overflow: hidden; */ /* Temporarily comment out */
+		text-overflow: ellipsis; /* Depends on overflow: hidden */
+		white-space: nowrap; 
+		text-align: center; 
+		/* color: black !important; */ /* For debugging color issues, if needed */
+	}
+	.device-view-port { /* Ensure this applies to the <a> tag */
+		display: flex;
+		flex-direction: column;
+		justify-content: center; 
+		align-items: center;
+		text-decoration: none; /* Prevent underline from messing with layout */
+	}
 	{% endif %}
 </style>
 {% endblock %}
@@ -103,94 +121,118 @@
 				data-bs-html="true"
 				data-bs-custom-class="device-view-tooltip"
 			>
-			{% if port_type == "status" %}
-				{% if int.enabled and int.connected_endpoints|length > 0  or int.is_port and int.link_peers|length > 0 %}
-				<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
-				{% elif int.enabled %}
-				<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
-				{% else %}
-				<span class="text-white"><i class="mdi mdi-close-thick"></i></span>
-				{% endif %}
-
-			{% elif port_type == "vlan" %}
-				{% if int.mode == "access" %}
-					{% if int.untagged_vlan %}
-						{% with first_letter=int.untagged_vlan.name|slice:":1"|upper  %} <!-- might fail -->
-						<span class="text-white">{{ first_letter }}</span>
-						{% endwith %}
-					{% endif %}					
-				{% elif int.mode == "tagged" %}
-					<span class="text-white"><i class="mdi mdi-tag"></i></span>
-				{% elif int.mode == "tagged-all" %}
-					<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
-				{% endif %}
-
-				{% elif port_type == "vlanid" %}
-				{% if int.mode == "access" %}
-					{% if int.untagged_vlan %}
-					<span class="text-white">{{ int.untagged_vlan.vid }}</span>
-					{% endif %}					
-				{% elif int.mode == "tagged" %}
-					<span class="text-white"><i class="mdi mdi-tag"></i></span>
-				{% elif int.mode == "tagged-all" %}
-					<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
-				{% endif %}				
-			
-			<!-- this could evaluate PSE / PD with different icons, but... for now just PoE exists or not... -->
-			{% elif port_type == "poe" %}
-				{% if int.poe_mode or int.poe_type %}
-				<span class="text-white"><i class="mdi  mdi-power-plug"></i></span>
-				{% else %}
-				<span class="text-white"><i class="mdi  mdi-power-plug-off"></i></span>
-				{% endif %}
-
-			{% elif port_type == "label" %}
-				{% if int.label %}
-				<code class="text-white" style="font-size:75%">
-					{{ int.label }}
-				</code>
-				{% endif %}
-				
-			{% elif port_type == "host" %}
-				{% if int.connected_endpoints|length > 0 %}
-				{% for ce in int.connected_endpoints %}
-					{% with host_stub=ce.device.name|split:"-"|last %}
-					<code class="text-white" style="font-size:75%">
-						{{ host_stub }}
-					</code>
+			{% if display_size == "large" %}
+				{# Line 1: VLAN Info #}
+				<span class="text-white port-info-large">
+					{% if int.mode == "access" and int.untagged_vlan and int.untagged_vlan.name %}
+						{{ int.untagged_vlan.name|slice:":1"|upper }}
+					{% elif int.mode == "tagged" %}<i class="mdi mdi-tag"></i>
+					{% elif int.mode == "tagged-all" %}<i class="mdi mdi-tag-multiple"></i>
+					{% else %}&nbsp;{% endif %}
+				</span>
+				{# Line 2: Port Number #}
+				<span class="text-white port-info-large">
+					{% with port_num_raw=int.name|split:"/"|last %}
+						{% for char_pn in port_num_raw %}{% if char_pn in "0123456789" %}{{ char_pn }}{% endif %}{% endfor %}
 					{% endwith %}
-				{% endfor %}
-				{% else %}
-				<span class="text-white"><i class="mdi  mdi-help"></i></span>
-				{% endif %}
+				</span>
+				{# Line 3: Host Name #}
+				<span class="text-white port-info-large">
+					{% if int.connected_endpoints.0 %}{{ int.connected_endpoints.0.device.name|truncatechars:8 }}{% else %}&nbsp;{% endif %}
+				</span>
+				{# Line 4: Host Interface #}
+				<span class="text-white port-info-large">
+					{% if int.connected_endpoints.0 %}{{ int.connected_endpoints.0.name|truncatechars:8 }}{% else %}&nbsp;{% endif %}
+				</span>
+			{% else %}
+				{% if port_type == "status" %}
+					{% if int.enabled and int.connected_endpoints|length > 0  or int.is_port and int.link_peers|length > 0 %}
+					<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+					{% elif int.enabled %}
+					<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+					{% else %}
+					<span class="text-white"><i class="mdi mdi-close-thick"></i></span>
+					{% endif %}
 
-			{% elif port_type == "type" %}
-				{% if 'base-t' in int.type %}
-					<span class="text-white"><i class="mdi mdi-ethernet"></i></span>
-				{% elif 'base-x' in int.type or 'sfp' in int.type or 'qsfp' in int.type or 'pon' in int.type or 'oc' in int.type or 'fc' in int.type %}
-					<span class="text-white"><i class="mdi mdi-laser-pointer"></i></span>
-				{% elif 'ieee802' in int.type or 'gsm' in int.type or 'cdma' in int.type or 'lte' in int.type or '4g' in int.type or '5g' in int.type or 'wireless' in int.type %}
-					<span class="text-white"><i class="mdi mdi-wifi"></i></span>
-				{% elif 'stackwise' in int.type or 'summitstack' in int.type or 'vcp' in int.type %}
-					<span class="text-white"><i class="mdi mdi-cable-data"></i></span>
-				{% else %}
-					<span class="text-white"><i class="mdi mdi-help"></i></span>
+				{% elif port_type == "vlan" %}
+					{% if int.mode == "access" %}
+						{% if int.untagged_vlan %}
+							{% with first_letter=int.untagged_vlan.name|slice:":1"|upper  %} <!-- might fail -->
+							<span class="text-white">{{ first_letter }}</span>
+							{% endwith %}
+						{% endif %}					
+					{% elif int.mode == "tagged" %}
+						<span class="text-white"><i class="mdi mdi-tag"></i></span>
+					{% elif int.mode == "tagged-all" %}
+						<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+					{% endif %}
+
+					{% elif port_type == "vlanid" %}
+					{% if int.mode == "access" %}
+						{% if int.untagged_vlan %}
+						<span class="text-white">{{ int.untagged_vlan.vid }}</span>
+						{% endif %}					
+					{% elif int.mode == "tagged" %}
+						<span class="text-white"><i class="mdi mdi-tag"></i></span>
+					{% elif int.mode == "tagged-all" %}
+						<span class="text-white"><i class="mdi mdi-tag-multiple"></i></span>
+					{% endif %}				
+				
+				<!-- this could evaluate PSE / PD with different icons, but... for now just PoE exists or not... -->
+				{% elif port_type == "poe" %}
+					{% if int.poe_mode or int.poe_type %}
+					<span class="text-white"><i class="mdi  mdi-power-plug"></i></span>
+					{% else %}
+					<span class="text-white"><i class="mdi  mdi-power-plug-off"></i></span>
+					{% endif %}
+
+				{% elif port_type == "label" %}
+					{% if int.label %}
+					<code class="text-white" style="font-size:75%">
+						{{ int.label }}
+					</code>
+					{% endif %}
+					
+				{% elif port_type == "host" %}
+					{% if int.connected_endpoints|length > 0 %}
+					{% for ce in int.connected_endpoints %}
+						{% with host_stub=ce.device.name|split:"-"|last %}
+						<code class="text-white" style="font-size:75%">
+							{{ host_stub }}
+						</code>
+						{% endwith %}
+					{% endfor %}
+					{% else %}
+					<span class="text-white"><i class="mdi  mdi-help"></i></span>
+					{% endif %}
+
+				{% elif port_type == "type" %}
+					{% if 'base-t' in int.type %}
+						<span class="text-white"><i class="mdi mdi-ethernet"></i></span>
+					{% elif 'base-x' in int.type or 'sfp' in int.type or 'qsfp' in int.type or 'pon' in int.type or 'oc' in int.type or 'fc' in int.type %}
+						<span class="text-white"><i class="mdi mdi-laser-pointer"></i></span>
+					{% elif 'ieee802' in int.type or 'gsm' in int.type or 'cdma' in int.type or 'lte' in int.type or '4g' in int.type or '5g' in int.type or 'wireless' in int.type %}
+						<span class="text-white"><i class="mdi mdi-wifi"></i></span>
+					{% elif 'stackwise' in int.type or 'summitstack' in int.type or 'vcp' in int.type %}
+						<span class="text-white"><i class="mdi mdi-cable-data"></i></span>
+					{% else %}
+						<span class="text-white"><i class="mdi mdi-help"></i></span>
+					{% endif %}
+					
 				{% endif %}
 				
-			{% endif %}
-			
-			<!-- large view displays port number, or maybe label-->
-			{% if display_size == "medium" or display_size == "large" %}
-				{% with last_segment=int.name|split:"/"|last %}
-					<p class="text-white">
-						{% for char in last_segment %}
-							{% if char in "0123456789" %}
-								<small>{{ char }}</small>
-							{% endif %}
-						{% endfor %}
-					</p>
-				{% endwith %}
-				
+				<!-- medium view displays port number -->
+				{% if display_size == "medium" %}
+					{% with last_segment=int.name|split:"/"|last %}
+						<p class="text-white" style="margin-top: auto; font-size: 8px; line-height: 1;">
+							{% for char in last_segment %}
+								{% if char in "0123456789" %}
+									{{ char }}
+								{% endif %}
+							{% endfor %}
+						</p>
+					{% endwith %}
+				{% endif %}
 			{% endif %}
 				</a>
 			{% endfor %}
