@@ -2,6 +2,8 @@ from netbox.views import generic
 from dcim.models import Device, Site, Rack
 from . import forms, models, tables, filtersets
 from utilities.views import ViewTab, register_model_view
+# utilities.permissions.PermissionRequiredMixin was incorrect, removed.
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin # Standard Django mixins
 from .utils import prepare
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -9,7 +11,6 @@ from django.apps import apps
 from django.views import View as DjangoView
 import pprint
 
-# from netbox.views.generic import View as NetBoxView # Ensure this or similar is available if generic.View is not the one
 from netbox.views.generic import BulkImportView
 from .forms import DeviceViewImportForm
 
@@ -80,9 +81,10 @@ class DeviceDeviceView(generic.ObjectView):
         return Device.objects.get(pk=kwargs.get("pk"))
 
 
-class DeviceElevationView(generic.View):
-    permission_required = 'dcim.view_device'
-    template_name = 'netbox_device_view/device_elevation.html' # Good practice
+class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoView): # DjangoView is alias for django.views.View
+    permission_required = 'dcim.view_device' # Standard Django PermissionRequiredMixin accepts a string for a single perm
+    # login_url = '/login/' # Optional: if NetBox login URL is different or needs to be explicit
+    # raise_exception = True # Optional: to raise 403 if logged in but no perm, instead of redirect
 
     def get(self, request):
         site_slug = request.GET.get('site_slug')
