@@ -7,6 +7,7 @@ Expects:
 - port_type: Current port_type selection (for content).
 - display_size: Current display_size selection.
 {% endcomment %}
+{% load device_view_filters %}
 <a
     {% if link_type == "host" and port.connected_endpoints|length > 0 %}
         {% for ce in port.connected_endpoints %}
@@ -92,7 +93,7 @@ Expects:
             {% if port.label %}{{ port.label|truncatechars:5 }}{% else %}&nbsp;{% endif %}
         {% elif port_type == "host" %}
             {% if port.connected_endpoints.0 and port.connected_endpoints.0.device and port.connected_endpoints.0.device.name %}
-                {{ port.connected_endpoints.0.device.name|split:"."|first|truncatechars:8 }} {# Simplified: first part of FQDN, truncated #}
+                {{ port.connected_endpoints.0.device.name|truncate_hostname_prefix }}
             {% else %}&nbsp;{% endif %}
         {% elif port_type == "type" %}
             {% if 'base-t' in port.type %}<i class="mdi mdi-ethernet"></i>
@@ -108,7 +109,7 @@ Expects:
     {% if display_size == "large" %}
     <span class="port-line port-line-hostname">
         {% if port.connected_endpoints.0 and port.connected_endpoints.0.device and port.connected_endpoints.0.device.name %}
-            {{ port.connected_endpoints.0.device.name|split:"."|first|truncatechars:8 }} {# Truncated to 8 #}
+            {{ port.connected_endpoints.0.device.name|truncate_hostname_prefix }}
         {% else %}&nbsp;{% endif %}
     </span>
     {% endif %}
