@@ -4,7 +4,7 @@ from django.conf import settings
 from dcim.models import Device
 
 
-class Ports(PluginTemplateExtension):
+class PortView(PluginTemplateExtension):
     def page(self):
         obj = self.context["object"]
 
@@ -32,7 +32,7 @@ class Ports(PluginTemplateExtension):
         )
 
 
-class DevicePorts(Ports):
+class DevicePortView(PortView):
     model = "dcim.device"
 
     def full_width_page(self):
@@ -41,4 +41,4 @@ class DevicePorts(Ports):
         return self.page()
 
 
-template_extensions = [DevicePorts]
+template_extensions = [DevicePortView]

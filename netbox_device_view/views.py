@@ -52,7 +52,7 @@ class DeviceDeviceView(generic.ObjectView):
 
     def get_extra_context(self, request, instance):
         dv, modules, ports_chassis = prepare(instance)
-        display_size_param = request.GET.get("display_size", "large")
+        display_size_param = request.GET.get("display_size", "medium")
         if display_size_param == "small":
             display_cell_size = 20
         elif display_size_param == "large":
@@ -133,7 +133,7 @@ class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoVie
         
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
 
-        display_size_param = request.GET.get("display_size", "large")
+        display_size_param = request.GET.get("display_size", "medium")
 
         for device in devices_with_view_defined[:50]:
             instance_id = f"dev-{device.pk}"
@@ -196,7 +196,7 @@ class SiteDeviceElevationView(generic.ObjectView):
         prepared_devices_data = []
         device_types_with_view = models.DeviceView.objects.values_list('device_type_id', flat=True)
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
-        display_size_param = request.GET.get("display_size", "large")
+        display_size_param = request.GET.get("display_size", "medium")
 
         for device in devices_with_view_defined[:50]:
             instance_id = f"dev-{device.pk}"
@@ -223,7 +223,7 @@ class SiteDeviceElevationView(generic.ObjectView):
 
         return {
             'prepared_devices': prepared_devices_data,
-            'title': 'Ports',
+            'title': 'Port View',
             'cable_colors': request.GET.get("cable_colors", "vlan_role"),
             'port_type': request.GET.get("port_type", "vlan_letter"),
             'display_size': display_size_param,
@@ -231,7 +231,7 @@ class SiteDeviceElevationView(generic.ObjectView):
         }
 
     tab = ViewTab(
-        label='Ports',
+        label='Port View',
         badge=lambda obj: obj.devices.filter(
             device_type_id__in=models.DeviceView.objects.values_list('device_type_id', flat=True)
         ).count(),
