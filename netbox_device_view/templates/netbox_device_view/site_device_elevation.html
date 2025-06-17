@@ -1,0 +1,113 @@
+{% extends 'dcim/site.html' %}
+{% load static %}
+{% load helpers %}
+{% load plugins %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="multi-device-container mt-3">
+            {% for data in prepared_devices %}
+            <div class="device-instance-wrapper">
+                <h3>
+                    <a href="{{ data.device_obj.get_absolute_url }}">{{ data.device_obj.name|default:"Unnamed Device" }}</a>
+                    {% if data.device_obj.device_role %}
+                        <small class="text-muted">({{ data.device_obj.device_role.name }})</small>
+                    {% endif %}
+                </h3>
+                <div class="{{ data.instance_id }}">
+                    {% spaceless %}
+                        {% for device_vc_key, interfaces_list_for_vc_key in data.ports_chassis_map.items %}
+                            {% include 'netbox_device_view/includes/_device_panel.html' with device_identifier=device_vc_key all_modules_data=data.modules_map interfaces_for_panel=interfaces_list_for_vc_key link_type=link_type cable_colors=cable_colors port_type=port_type display_size=display_size %}
+                        {% endfor %}
+                    {% endspaceless %}
+                </div>
+            </div>
+            {% empty %}
+                <div class="col-md-12">
+                    <p>No devices with applicable views found in this site.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h4>Options</h4></div>
+    <div class="card-body">
+        <form method="get">
+            {% include 'netbox_device_view/includes/_options_form.html' %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'netbox_device_view/css/device_view.css' %}" />
+<style>
+    {% autoescape off %}
+    {% for data in prepared_devices %}
+        {% for id, ddv_css in data.dv_css_map.items %}
+            {{ ddv_css }}
+        {% endfor %}
+    {% endfor %}
+    {% endautoescape %}
+
+    .multi-device-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Space between device views */
+    }
+    .device-instance-wrapper {
+        /* padding: 1rem;  */
+    }
+    .device-instance-wrapper h3 {
+        margin-top: 0;
+        /* margin-bottom: 1rem; Space below device name */
+        font-size: 1.25rem; /* Slightly larger font for device name */
+    }
+    
+    /* Individual device view height, prefixed by instance_id */
+    {% for data in prepared_devices %}
+    .{{ data.instance_id }} .deviceview {
+        height: {{ data.device_render_height }}px; /* Dynamic height */
+        {% if display_size == "small" %}
+            grid-auto-columns: 20px;
+            grid-auto-rows: 20px;
+        {% elif display_size == "medium" %}
+            grid-auto-columns: 40px;
+            grid-auto-rows: 40px;
+            width: 1404px; 
+        {% elif display_size == "large" %}
+            grid-auto-columns: 60px;
+            grid-auto-rows: 60px;
+            width: 2106px;
+    }
+    /* Apply port-info-large and device-view-port styles specifically for large display in elevation */
+    .{{ data.instance_id }} .port-info-large {
+        font-size: 9px; 
+        line-height: 1.1; 
+        display: block; 
+        text-overflow: ellipsis; 
+        white-space: nowrap; 
+        text-align: center; 
+    }
+    .{{ data.instance_id }} .device-view-port { /* Ensure this applies to the <a> tag */
+        display: flex;
+        flex-direction: column;
+        justify-content: center; 
+        align-items: center;
+        text-decoration: none; /* Prevent underline from messing with layout */
+        height: 100%; /* Make a tag fill the cell for flex centering */
+        width: 100%;
+    }
+    .{{ data.instance_id }} .deviceview {
+        {% else %} /* Default to medium styling if display_size is somehow unset or unexpected */
+            grid-auto-columns: 40px;
+            grid-auto-rows: 40px;
+        {% endif %}
+    }
+    {% endfor %}
+</style>
+{% endblock %}

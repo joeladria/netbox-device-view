@@ -86,7 +86,7 @@ class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoVie
     # login_url = '/login/' # Optional: if NetBox login URL is different or needs to be explicit
     # raise_exception = True # Optional: to raise 403 if logged in but no perm, instead of redirect
 
-    def get(self, request):
+    def _get_context(self, request):
         site_slug = request.GET.get('site_slug')
         rack_id = request.GET.get('rack_id')
         
@@ -158,7 +158,7 @@ class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoVie
                     'device_render_height': device_render_height
                 })
         
-        return render(request, 'netbox_device_view/device_elevation.html', {
+        return {
             'prepared_devices': prepared_devices_data,
             'title': 'Device Elevation',
             'site': site,
@@ -171,4 +171,69 @@ class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoVie
             'port_type': request.GET.get("port_type", "vlan_letter"),
             'display_size': display_size_param,
             'link_type': request.GET.get("link_type", "interface"),
-        })
+        }
+
+    def get(self, request):
+        context = self._get_context(request)
+        return render(request, 'netbox_device_view/device_elevation.html', context)
+
+
+@register_model_view(Site, name='ports', path='ports')
+class SiteDeviceElevationView(generic.ObjectView):
+    queryset = Site.objects.all()
+    template_name = 'netbox_device_view/site_device_elevation.html'
+
+    def get_extra_context(self, request, instance):
+        request.GET = request.GET.copy()
+        request.GET['site_slug'] = instance.slug
+
+        # Re-implement the context gathering from DeviceElevationView
+        site_slug = request.GET.get('site_slug')
+        devices_to_display = Device.objects.filter(site__slug=site_slug).prefetch_related(
+            'device_type', 'modules', 'interfaces', 'frontports', 'rearports', 'virtual_chassis__members'
+        )
+
+        prepared_devices_data = []
+        device_types_with_view = models.DeviceView.objects.values_list('device_type_id', flat=True)
+        devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
+        display_size_param = request.GET.get("display_size", "large")
+
+        for device in devices_with_view_defined[:50]:
+            instance_id = f"dev-{device.pk}"
+            dv_css_map, modules_map, ports_chassis_map = prepare(device, instance_prefix=instance_id)
+            
+            if dv_css_map is not None:
+                if display_size_param == "small":
+                    display_cell_size = 20
+                elif display_size_param == "large":
+                    display_cell_size = 60
+                else:  # medium or default
+                    display_cell_size = 40
+                
+                device_render_height = device.device_type.u_height * 2 * display_cell_size + device.device_type.u_height * 2
+                
+                prepared_devices_data.append({
+                    'device_obj': device,
+                    'instance_id': instance_id,
+                    'dv_css_map': dv_css_map,
+                    'modules_map': modules_map,
+                    'ports_chassis_map': ports_chassis_map,
+                    'device_render_height': device_render_height
+                })
+
+        return {
+            'prepared_devices': prepared_devices_data,
+            'title': 'Ports',
+            'cable_colors': request.GET.get("cable_colors", "vlan_role"),
+            'port_type': request.GET.get("port_type", "vlan_letter"),
+            'display_size': display_size_param,
+            'link_type': request.GET.get("link_type", "interface"),
+        }
+
+    tab = ViewTab(
+        label='Ports',
+        badge=lambda obj: obj.devices.filter(
+            device_type_id__in=models.DeviceView.objects.values_list('device_type_id', flat=True)
+        ).count(),
+        hide_if_empty=True,
+    )
