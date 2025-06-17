@@ -6,41 +6,51 @@ Expects the following context variables to be set for selected options:
 - cable_colors
 - link_type
 {% endcomment %}
-<div class="form-group mt-3">
-    <label for="display_size" class="form-check-label mb-2">Display Size</label>
-    <select name="display_size" id="display_size" class="form-control mb-3" onChange="this.form.submit()">
-        <option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
-        <option value="medium" {% if display_size == "medium" %}selected{% endif %}>Medium</option>
-        <option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
-    </select>
-</div>
-<div class="form-group mt-3">
-    <label for="port_type" class="form-check-label mb-2">Port Display</label>
-    <select name="port_type" id="port_type" class="form-control mb-3" onChange="this.form.submit()">
-        <option value="status" {% if port_type == "status" %}selected{% endif %}>Port Status</option>
-        <option value="vlan_letter" {% if port_type == "vlan_letter" %}selected{% endif %}>VLAN Letter</option>
-        <option value="vlanid" {% if port_type == "vlanid" %}selected{% endif %}>VLAN ID</option>					
-        <option value="host" {% if port_type == "host" %}selected{% endif %}>Host</option>
-        <option value="label" {% if port_type == "label" %}selected{% endif %}>Label</option>					
-        <option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
-        <option value="type" {% if port_type == "type" %}selected{% endif %}>Type</option>
-    </select>
-</div>
-<div class="form-group mt-3">
-    <label for="cable_colors" class="form-check-label mb-2">Port color</label>
-    <select name="cable_colors" id="cable_colors" class="form-control mb-3" onChange="this.form.submit()">
-        <option value="None" {% if cable_colors == "None" %}selected{% endif %}>None</option>
-        <option value="Cable" {% if cable_colors == "Cable" %}selected{% endif %}>Cable</option>
-        <option value="Status" {% if cable_colors == "Status" %}selected{% endif %}>Status</option>
-        <option value="PoE" {% if cable_colors == "PoE" %}selected{% endif %}>PoE</option>
-        <option value="vlan_role" {% if cable_colors == "vlan_role" %}selected{% endif %}>VLAN Role</option>
-    </select>
-</div>
-<div class="form-group mt-3">
-    <label for="link_type" class="form-check-label mb-2">Port Link</label>
-    <select name="link_type" id="link_type" class="form-control mb-3" onChange="this.form.submit()">
-        <option value="trace" {% if link_type == "trace" %}selected{% endif %}>Trace</option>
-        <option value="host" {% if link_type == "host" %}selected{% endif %}>Host</option>
-        <option value="interface" {% if link_type == "interface" %}selected{% endif %}>Interface</option>					
-    </select>						
+<div class="row">
+    <div class="col-md-3">
+        <div class="form-group mt-3">
+            <label for="display_size" class="form-check-label mb-2">Display Size</label>
+            <select name="display_size" id="display_size" class="form-control mb-3" onChange="this.form.submit()">
+                <option value="small" {% if display_size == "small" %}selected{% endif %}>Small</option>
+                <option value="medium" {% if display_size == "medium" %}selected{% endif %}>Medium</option>
+                <option value="large" {% if display_size == "large" %}selected{% endif %}>Large</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group mt-3">
+            <label for="port_type" class="form-check-label mb-2">Port Display</label>
+            <select name="port_type" id="port_type" class="form-control mb-3" onChange="this.form.submit()">
+                <option value="status" {% if port_type == "status" %}selected{% endif %}>Port Status</option>
+                <option value="vlan_letter" {% if port_type == "vlan_letter" %}selected{% endif %}>VLAN Letter</option>
+                <option value="vlanid" {% if port_type == "vlanid" %}selected{% endif %}>VLAN ID</option>
+                <option value="host" {% if port_type == "host" %}selected{% endif %}>Host</option>
+                <option value="label" {% if port_type == "label" %}selected{% endif %}>Label</option>
+                <option value="poe" {% if port_type == "poe" %}selected{% endif %}>PoE</option>
+                <option value="type" {% if port_type == "type" %}selected{% endif %}>Type</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group mt-3">
+            <label for="cable_colors" class="form-check-label mb-2">Port Color</label>
+            <select name="cable_colors" id="cable_colors" class="form-control mb-3" onChange="this.form.submit()">
+                <option value="None" {% if cable_colors == "None" %}selected{% endif %}>None</option>
+                <option value="Cable" {% if cable_colors == "Cable" %}selected{% endif %}>Cable</option>
+                <option value="Status" {% if cable_colors == "Status" %}selected{% endif %}>Status</option>
+                <option value="PoE" {% if cable_colors == "PoE" %}selected{% endif %}>PoE</option>
+                <option value="vlan_role" {% if cable_colors == "vlan_role" %}selected{% endif %}>VLAN Role</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group mt-3">
+            <label for="link_type" class="form-check-label mb-2">Port Link</label>
+            <select name="link_type" id="link_type" class="form-control mb-3" onChange="this.form.submit()">
+                <option value="trace" {% if link_type == "trace" %}selected{% endif %}>Trace</option>
+                <option value="host" {% if link_type == "host" %}selected{% endif %}>Host</option>
+                <option value="interface" {% if link_type == "interface" %}selected{% endif %}>Interface</option>
+            </select>
+        </div>
+    </div>
 </div>
