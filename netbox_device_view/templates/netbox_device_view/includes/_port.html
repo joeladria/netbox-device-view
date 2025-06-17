@@ -106,7 +106,7 @@ Expects:
     </span>
 
     {# Line 2: Hostname (Large display only) #}
-    {% if display_size == "large" %}
+    {% if display_size == "medium" or display_size == "large" %}
     <span class="port-line port-line-hostname">
         {% if port.connected_endpoints.0 and port.connected_endpoints.0.device and port.connected_endpoints.0.device.name %}
             {{ port.connected_endpoints.0.device.name|get_hostname_last_segment }}
@@ -114,14 +114,14 @@ Expects:
     </span>
     {% endif %}
 
-    <!-- {# Line 3: Interface Name (Large display only) #}
+    {# Line 3: Interface Name (Large display only) #}
     {% if display_size == "large" %}
     <span class="port-line port-line-interface">
         {% if port.connected_endpoints.0 and port.connected_endpoints.0.name %}
             {{ port.connected_endpoints.0.name|truncatechars:8 }} {# Truncated to 8 #}
         {% else %}&nbsp;{% endif %}
     </span>
-    {% endif %} -->
+    {% endif %}
 
     {# Line 4 (Medium) / Line 2 (Large): Port Number (Always shown if medium or large, styled with box) #}
     {% if display_size == "medium" or display_size == "large" %}

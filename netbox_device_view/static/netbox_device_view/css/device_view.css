@@ -67,7 +67,7 @@
 }
 
 .port-line-display-option {
-    font-size: 1.1em; /* Slightly larger font for the main display option */
+    font-size: 0.6em; /* Slightly larger font for the main display option */
     font-weight: bold;
     flex-shrink: 0; /* Prevent shrinking */
 }
@@ -75,7 +75,7 @@
 .port-line-hostname,
 .port-line-interface {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; /* Sans-serif monospace */
-    font-size: 0.85em;
+    font-size: 0.8em;
     flex-shrink: 0; /* Prevent shrinking */
 }
 
@@ -85,7 +85,7 @@
     margin-top: auto;      /* Pushes to the bottom */
     align-self: center;  /* Center itself if it's narrower than container */
     line-height: 1.2;
-    font-size: 0.8em;
+    font-size: 0.6em;
     background-color: rgba(0,0,0,0.1); /* Slight background to distinguish */
     border-radius: 2px;
     flex-shrink: 0; /* Prevent shrinking */
