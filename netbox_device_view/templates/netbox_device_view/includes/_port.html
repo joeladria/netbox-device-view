@@ -7,7 +7,7 @@ Expects:
 - port_type: Current port_type selection (for content).
 - display_size: Current display_size selection.
 {% endcomment %}
-{% load device_view_filters %}
+{% load get_hostname_last_segment %}
 <a
     {% if link_type == "host" and port.connected_endpoints|length > 0 %}
         {% for ce in port.connected_endpoints %}
