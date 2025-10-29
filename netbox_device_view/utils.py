@@ -7,6 +7,31 @@ from extras.models import Tag
 import re
 
 
+def get_hostname_last_segment(hostname):
+    """
+    Extract the last segment of a hostname after splitting by dashes.
+    
+    Args:
+        hostname: The hostname string to process
+    
+    Returns:
+        The last segment of the hostname after splitting by '-'
+        If no dashes are present, returns the original hostname
+        
+    Examples:
+        "FVR2-CTL-XAG01" → "XAG01"
+        "switch-01" → "01" 
+        "router" → "router"
+    """
+    if not isinstance(hostname, str):
+        return hostname
+    
+    parts = hostname.split('-')
+    if parts:
+        return parts[-1]
+    return hostname
+
+
 def process_interfaces(interfaces, ports_chassis, dev):
     if interfaces is not None:
         for itf in interfaces:
@@ -25,6 +50,12 @@ def process_interfaces(interfaces, ports_chassis, dev):
                 itf.stylename[0].isdigit() or itf.stylename[0] == "-"
             ):
                 itf.stylename = f"p{itf.stylename}"
+
+            # Add hostname processing for connected endpoints
+            if hasattr(itf, 'connected_endpoints') and itf.connected_endpoints:
+                for ce in itf.connected_endpoints:
+                    if hasattr(ce, 'device') and hasattr(ce.device, 'name'):
+                        ce.device.name_last_segment = get_hostname_last_segment(ce.device.name)
 
             itf.vlan_role_color = None
             itf.debug_vlan_role_tag_name = "N/A"
@@ -77,6 +108,12 @@ def process_ports(ports, ports_chassis, dev):
             port.debug_vlan_role_tag_name = "N/A"
             port.debug_vlan_role_tag_color = "N/A"
             port.vlan_role_color = None
+
+            # Add hostname processing for link peers
+            if hasattr(port, 'link_peers') and port.link_peers:
+                for lp in port.link_peers:
+                    if hasattr(lp, 'device') and hasattr(lp.device, 'name'):
+                        lp.device.name_last_segment = get_hostname_last_segment(lp.device.name)
 
             if dev not in ports_chassis:
                 ports_chassis[dev] = []

@@ -7,7 +7,6 @@ Expects:
 - port_type: Current port_type selection (for content).
 - display_size: Current display_size selection.
 {% endcomment %}
-{% load device_view_filters %}
 <a
     {% if link_type == "host" and port.connected_endpoints|length > 0 %}
         {% for ce in port.connected_endpoints %}
@@ -72,7 +71,7 @@ Expects:
 
         {% if port.is_port %}
             {% if port.link_peers|length > 0 %}
-                <span class="port-line port-line-hostname">{{ port.link_peers.0.device.name|get_hostname_last_segment }}</span>
+                <span class="port-line port-line-hostname">{{ port.link_peers.0.device.name_last_segment|default:port.link_peers.0.device.name }}</span>
                 <span class="port-line port-line-interface">{{ port.link_peers.0.name }}</span>
             {% endif %}
         {% else %}
@@ -98,7 +97,7 @@ Expects:
                 {% if port.label %}{{ port.label|truncatechars:5 }}{% else %}&nbsp;{% endif %}
             {% elif port_type == "host" %}
                 {% if port.connected_endpoints.0 and port.connected_endpoints.0.device and port.connected_endpoints.0.device.name %}
-                    {{ port.connected_endpoints.0.device.name|get_hostname_last_segment }}
+                    {{ port.connected_endpoints.0.device.name_last_segment|default:port.connected_endpoints.0.device.name }}
                 {% else %}&nbsp;{% endif %}
             {% elif port_type == "type" %}
                 {% if 'base-t' in port.type %}<i class="mdi mdi-ethernet"></i>
@@ -116,7 +115,7 @@ Expects:
     {% if display_size == "medium" or display_size == "large" %}
     <span class="port-line port-line-hostname">
         {% if port.connected_endpoints.0 and port.connected_endpoints.0.device and port.connected_endpoints.0.device.name %}
-            {{ port.connected_endpoints.0.device.name|get_hostname_last_segment }}
+            {{ port.connected_endpoints.0.device.name_last_segment|default:port.connected_endpoints.0.device.name }}
         {% else %}&nbsp;{% endif %}
     </span>
     {% endif %}
@@ -133,8 +132,13 @@ Expects:
     {# Line 4 (Medium) / Line 2 (Large): Port Number (Always shown if medium or large, styled with box) #}
     {% if display_size == "medium" or display_size == "large" %}
     <span class="port-line port-line-number">
-        {% with port_num_raw=port.name|split:"/"|last %}
-            {% for char_pn in port_num_raw %}{% if char_pn in "0123456789" %}{{ char_pn }}{% endif %}{% endfor %}
+        {# Extract numeric port number from port name #}
+        {% with port_name=port.name %}
+            {% for char in port_name %}
+                {% if char in "0123456789" and forloop.counter > port_name|length|add:"-5" %}
+                    {{ char }}
+                {% endif %}
+            {% endfor %}
         {% endwith %}
     </span>
     {% endif %}
