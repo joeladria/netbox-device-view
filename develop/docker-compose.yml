@@ -1,0 +1,94 @@
+---
+volumes:
+  netbox-device-plugin:
+    driver: local
+
+services:
+  netbox:
+    container_name: netbox-device-netbox
+    image: sheet/netbox:${NETBOX_VERSION}-${PYTHON_VERSION}
+    profiles:
+    - netbox
+    depends_on:
+      - postgres
+      - redis
+    init: true
+    command:
+      - sh
+      - -c
+      - python manage.py migrate && python manage.py runserver 0.0.0.0:8000
+    ports:
+      - '3000:3000'
+      - '8000:8000'
+    volumes:
+      - ${PWD}/:/opt/netbox_device_view
+      - ${PWD}/develop/configuration.py:/opt/netbox/netbox/netbox/configuration.py
+      - ${PWD}/develop/my_netbox_scripts:/opt/netbox/netbox/scripts      
+      # - ${PWD}/develop/manage.py:/opt/netbox/netbox/manage.py
+    env_file: ${PWD}/develop/dev.env
+    environment:
+        DEBUG: "True"
+        DEVELOPER: "True"
+    tty: true
+    build: &build
+      context: ${PWD}
+      dockerfile: ${PWD}/develop/Dockerfile
+      args:
+      - NETBOX_VERSION
+      - PYTHON_VERSION
+      
+
+
+      
+  worker:
+    container_name: netbox-device-worker
+    image: sheet/netbox:${NETBOX_VERSION}-${PYTHON_VERSION}
+    profiles:
+    - netbox
+    depends_on:
+      - netbox
+    init: true
+    command:
+      - sh
+      - -c
+      - python manage.py rqworker
+    volumes:
+      - ${PWD}/:/opt/netbox_device_view
+      - ${PWD}/develop//configuration.py:/opt/netbox/netbox/netbox/configuration.py
+      - ${PWD}/develop/my_netbox_scripts:/opt/netbox/netbox/scripts            
+    env_file: ${PWD}/develop/dev.env
+    tty: true
+    build:
+      <<: *build
+
+  postgres:
+    container_name: netbox-device-postgres
+    image: postgres:17-alpine
+    healthcheck:
+          test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+          start_period: 20s
+          timeout: 30s
+          interval: 10s
+          retries: 5    
+    profiles:
+    - netbox
+    env_file: dev.env
+    command: -c fsync=off
+    volumes:
+      - netbox-device-plugin:/var/lib/postgresql/data
+      - ./demo_data:/docker-entrypoint-initdb.d
+
+ 
+
+  redis:
+    container_name: netbox-device-redis
+    image: redis:7
+    profiles:
+    - netbox
+    init: true
+    command:
+      - sh
+      - -c
+      - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD
+    env_file: ${PWD}/develop/dev.env
+
