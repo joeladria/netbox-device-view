@@ -105,3 +105,9 @@ venv.bak/
 
 # MacOS FS
 .DS_Store
+
+
+develop/demo_data/**
+memory-bank/** 
+.clinerules
+develop/my_netbox_scripts/**
