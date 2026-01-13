@@ -15,6 +15,10 @@ CHANGELOG_RETENTION = 7
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
 PLUGINS = ["netbox_device_view", "netbox_custom_objects"]
 
+API_TOKEN_PEPPERS = {}
+if api_token_pepper := os.environ.get('API_TOKEN_PEPPER_1', ''):
+    API_TOKEN_PEPPERS.update({1: api_token_pepper})
+
 
 TIME_ZONE = os.environ.get("TIME_ZONE", "UTC")
 SECRET_KEY = os.environ.get(
