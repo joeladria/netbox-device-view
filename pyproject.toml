@@ -7,9 +7,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name =  "netbox-device-view"
-version = "0.1.10-alpha"
+version = "0.2.0"
 authors = [
     {name = "Peter Baumert", email = "noreply@github.com"},
+    {name = "Joel Adria", email = "noreply@github.com"},
 ]
 description = "Netbox Device View"
 readme = "README.md"

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="netbox-device-view",
-    version="0.1.10-alpha",
+    version="0.2.0",
     description="NetBox Device View plugin",
     packages=find_packages(),
     author="Peter Baumert",
