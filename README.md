@@ -22,9 +22,25 @@ PLUGINS = ["netbox_device_view"]
 PLUGINS_CONFIG = {
     'netbox_device_view': {
         'show_on_device_tab': True,
+        # Optional: Customize VLAN role colors (hex codes without #)
+        'vlan_role_colors': {
+            'Video': '28A745',              # green
+            'Lighting': 'DC3545',           # red
+            'Audio': '007BFF',              # blue
+            'Cameras': 'FFC107',            # yellow
+            'Network Management': '343A40', # dark-gray
+            'Interactive': 'FFC107',        # yellow
+            # Add your own VLAN roles and colors here
+        }
     },
 }
 ```
+
+### VLAN Role Colors
+
+The plugin can color-code ports based on their VLAN role when using the `vlan_role` cable color option. You can customize which colors are used for each VLAN role in your `configuration.py` (see example above).
+
+**Default colors** are provided for common roles, and any unmapped roles will default to gray. The color format is hex code without the `#` symbol (e.g., `FF0000` for red).
 
 First run `source /opt/netbox/venv/bin/activate` to enter the Python virtual environment.
 

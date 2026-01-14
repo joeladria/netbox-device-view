@@ -2,7 +2,7 @@ from dcim.models import ConsolePort
 from .models import DeviceView
 from django.core.exceptions import ObjectDoesNotExist
 from django.apps import apps
-from extras.models import Tag
+from django.conf import settings
 
 import re
 
@@ -89,36 +89,39 @@ def process_interfaces(interfaces, ports_chassis, dev):
                     if hasattr(ce, 'device') and hasattr(ce.device, 'name'):
                         ce.device.name_last_segment = get_hostname_last_segment(ce.device.name)
 
+            # Get VLAN role color from plugin configuration
             itf.vlan_role_color = None
-            itf.debug_vlan_role_tag_name = "N/A"
-            itf.debug_vlan_role_tag_color = "N/A"
+            itf.debug_vlan_role_name = "N/A"
 
             if not hasattr(itf, 'untagged_vlan') or not itf.untagged_vlan:
                 itf.debug_vlan_role_name = "No untagged VLAN"
             elif not itf.untagged_vlan.role:
                 itf.debug_vlan_role_name = "Untagged VLAN has no role"
             else:
-                itf.debug_vlan_role_name = itf.untagged_vlan.role.name
+                role_name = itf.untagged_vlan.role.name
+                itf.debug_vlan_role_name = role_name
+                
+                # Get color mapping from plugin configuration with safe fallbacks
                 try:
-                    role_tags = itf.untagged_vlan.role.tags.all()
-                    found_tag = False
-                    for tag in role_tags:
-                        if tag.color:
-                            itf.vlan_role_color = tag.color
-                            itf.debug_vlan_role_tag_name = tag.name
-                            itf.debug_vlan_role_tag_color = f"#{tag.color}"
-                            found_tag = True
-                            break
-                    if not found_tag and role_tags:
-                        itf.debug_vlan_role_tag_name = f"Found {len(role_tags)} tag(s), none with color"
-                    elif not role_tags:
-                        itf.debug_vlan_role_tag_name = "No tags on role"
+                    # Try to get from PLUGINS_CONFIG
+                    vlan_colors = settings.PLUGINS_CONFIG.get('netbox_device_view', {}).get('vlan_role_colors', {})
+                    
+                    # Fallback to default settings if not configured
+                    if not vlan_colors:
+                        from . import NetBoxDeviceViewConfig
+                        vlan_colors = NetBoxDeviceViewConfig.default_settings.get('vlan_role_colors', {})
+                    
+                    # Look up color for this role, with gray as ultimate fallback
+                    if role_name in vlan_colors:
+                        itf.vlan_role_color = vlan_colors[role_name]
+                    else:
+                        # Default gray color for unmapped roles
+                        itf.vlan_role_color = "6C757D"
+                        
                 except Exception as e:
-                    error_message = str(e)
-                    if "managerfromrestrictedqueryset" in error_message.lower():
-                        error_message = "Permission error fetching tags."
-                    print(f"Error looking up tag for VLAN role on interface {itf.name}: {e}")
-                    itf.debug_vlan_role_tag_name = f"Error: {error_message[:50]}"
+                    # If anything goes wrong, use default gray and log the error
+                    print(f"Error looking up VLAN role color for interface {itf.name}: {e}")
+                    itf.vlan_role_color = "6C757D"
 
             if dev not in ports_chassis:
                 ports_chassis[dev] = []
@@ -140,8 +143,6 @@ def process_ports(ports, ports_chassis, dev):
             port.port_number = extract_port_number(port.name)
 
             port.debug_vlan_role_name = "N/A (Not an Interface)"
-            port.debug_vlan_role_tag_name = "N/A"
-            port.debug_vlan_role_tag_color = "N/A"
             port.vlan_role_color = None
 
             # Add hostname processing for link peers

@@ -15,7 +15,17 @@ class NetBoxDeviceViewConfig(PluginConfig):
     default_settings = {
         "show_on_device_tab": False,
         "show_site_ports": False,
-        "site_ports_label": "Port View"
+        "site_ports_label": "Port View",
+        "vlan_role_colors": {
+            # Default VLAN role to color mappings (hex colors without #)
+            # Users can override these in their configuration.py PLUGINS_CONFIG
+            "Video": "28A745",              # green
+            "Lighting": "DC3545",           # red
+            "Audio": "007BFF",              # blue
+            "Cameras": "FFC107",            # yellow
+            "Network Management": "343A40", # dark-gray
+            "Interactive": "FFC107",        # yellow
+        }
     }
 
 
