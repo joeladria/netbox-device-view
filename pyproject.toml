@@ -11,7 +11,7 @@ version = "0.1.10-alpha"
 authors = [
     {name = "Peter Baumert", email = "noreply@github.com"},
 ]
-description = "Netbox Plugin for display port views of Netbox Devices"
+description = "Netbox Device View"
 readme = "README.md"
 
 classifiers=[
