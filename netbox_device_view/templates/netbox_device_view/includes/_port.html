@@ -124,14 +124,7 @@ Expects:
     {# Line 4 (Medium) / Line 2 (Large): Port Number (Always shown if medium or large, styled with box) #}
     {% if display_size == "medium" or display_size == "large" %}
     <span class="port-line port-line-number">
-        {# Extract numeric port number from port name #}
-        {% with port_name=port.name %}
-            {% for char in port_name %}
-                {% if char in "0123456789" and forloop.counter > port_name|length|add:"-5" %}
-                    {{ char }}
-                {% endif %}
-            {% endfor %}
-        {% endwith %}
+        {{ port.port_number }}
     </span>
     {% endif %}
 </div>

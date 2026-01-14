@@ -32,6 +32,35 @@ def get_hostname_last_segment(hostname):
     return hostname
 
 
+def extract_port_number(port_name):
+    """
+    Extract the last contiguous group of digits from a port name.
+    Preserves zero-padding.
+    
+    Args:
+        port_name: The port name string to process
+    
+    Returns:
+        The last contiguous group of digits as a string
+        Returns empty string if no digits are found
+        
+    Examples:
+        "Port 1" → "1"
+        "Port 01" → "01"
+        "GigabitEthernet1/0/1" → "1"
+        "Ethernet0/0/12" → "12"
+        "eth-0/1/2" → "2"
+    """
+    if not isinstance(port_name, str):
+        return ""
+    
+    # Match the last contiguous group of digits
+    match = re.search(r'(\d+)(?!.*\d)', port_name)
+    if match:
+        return match.group(1)
+    return ""
+
+
 def process_interfaces(interfaces, ports_chassis, dev):
     if interfaces is not None:
         for itf in interfaces:
@@ -50,6 +79,9 @@ def process_interfaces(interfaces, ports_chassis, dev):
                 itf.stylename[0].isdigit() or itf.stylename[0] == "-"
             ):
                 itf.stylename = f"p{itf.stylename}"
+
+            # Extract port number from interface name
+            itf.port_number = extract_port_number(itf.name)
 
             # Add hostname processing for connected endpoints
             if hasattr(itf, 'connected_endpoints') and itf.connected_endpoints:
@@ -103,6 +135,9 @@ def process_ports(ports, ports_chassis, dev):
             port.stylename = re.sub(r"[^.a-zA-Z\d]", "-", port.name.lower())
             if port.stylename.isdigit():
                 port.stylename = f"p{port.stylename}"
+
+            # Extract port number from port name
+            port.port_number = extract_port_number(port.name)
 
             port.debug_vlan_role_name = "N/A (Not an Interface)"
             port.debug_vlan_role_tag_name = "N/A"
