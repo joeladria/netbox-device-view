@@ -3,7 +3,6 @@ from . import models, views
 from netbox.views.generic import ObjectChangeLogView
 
 urlpatterns = (
-    path("device-elevation/", views.DeviceElevationView.as_view(), name="device_elevation"),
     path("device-view/", views.DeviceViewListView.as_view(), name="deviceview_list"),
     path("device-view/add/", views.DeviceViewEditView.as_view(), name="deviceview_add"),
     path(
