@@ -25,6 +25,22 @@
 	text-decoration: none;
 }
 
+.device-view-port {
+	background-color: #333; /* Dark grey default background */
+	color: white !important; /* White text for contrast */
+}
+
+.device-view-port * {
+	color: white !important; /* Ensure all child elements also have white text */
+}
+
+.device-view-port:visited,
+.device-view-port:link,
+.device-view-port:hover,
+.device-view-port:active {
+	color: white !important; /* Override link colors in all states */
+}
+
 .deviceview a:hover {
 	transform: scale(1.2);
 }

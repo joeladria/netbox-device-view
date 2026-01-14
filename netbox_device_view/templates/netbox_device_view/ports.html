@@ -36,11 +36,11 @@
 				data-bs-custom-class="device-view-tooltip"
 			>
 				{% if int.enabled and int.connected_endpoints|length > 0 %}
-				<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+				<span><i class="mdi mdi-check-bold"></i></span>
 				{% elif int.enabled %}
-				<span class="text-white"><i class="mdi mdi-check-bold"></i></span>
+				<span><i class="mdi mdi-check-bold"></i></span>
 				{% else %}
-				<span class="text-white"><i class="mdi mdi-close-thick"></i></span>
+				<span><i class="mdi mdi-close-thick"></i></span>
 				{% endif %}
 			</a>
 			{% endfor %}
