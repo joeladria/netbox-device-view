@@ -25,11 +25,16 @@ class DeviceView(NetBoxModel):
     def __str__(self):
         if self.name:
             return self.name
-        types = self.device_types.all()
-        if types.count() == 1:
-            return types.first().model
-        elif types.count() > 1:
-            return f"View for {types.count()} device types"
+        # Safely handle M2M access during deletion to avoid RecursionError
+        try:
+            types = self.device_types.all()
+            if types.count() == 1:
+                return types.first().model
+            elif types.count() > 1:
+                return f"View for {types.count()} device types"
+        except:
+            # During deletion or if M2M is unavailable, use pk
+            pass
         return f"DeviceView #{self.pk}"
     
     @property

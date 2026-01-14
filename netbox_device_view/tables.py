@@ -5,9 +5,10 @@ from .models import DeviceView
 
 
 class DeviceViewTable(NetBoxTable):
-    name = tables.Column(
+    id = tables.Column(
         linkify=True
     )
+    name = tables.Column()
     device_types = tables.TemplateColumn(
         template_code="""
         {% for dt in record.device_types.all %}
@@ -20,4 +21,4 @@ class DeviceViewTable(NetBoxTable):
     class Meta(NetBoxTable.Meta):
         model = DeviceView
         fields = ("pk", "id", "name", "device_types", "grid_template_area")
-        default_columns = ("name", "device_types", "grid_template_area")
+        default_columns = ("id", "name", "device_types", "grid_template_area")
