@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.apps import apps
 from django.views import View as DjangoView
+from django.conf import settings
 import pprint
 
 from netbox.views.generic import BulkImportView
@@ -178,7 +179,7 @@ class DeviceElevationView(LoginRequiredMixin, PermissionRequiredMixin, DjangoVie
         return render(request, 'netbox_device_view/device_elevation.html', context)
 
 
-@register_model_view(Site, name='ports', path='ports')
+# Define the view class without decorator first
 class SiteDeviceElevationView(generic.ObjectView):
     queryset = Site.objects.all()
     template_name = 'netbox_device_view/site_device_elevation.html'
@@ -231,9 +232,14 @@ class SiteDeviceElevationView(generic.ObjectView):
         }
 
     tab = ViewTab(
-        label='Port View',
+        label=settings.PLUGINS_CONFIG.get('netbox_device_view', {}).get('ports_tab_label', 'Port View'),
         badge=lambda obj: obj.devices.filter(
             device_type_id__in=models.DeviceView.objects.values_list('device_type_id', flat=True)
         ).count(),
         hide_if_empty=True,
     )
+
+
+# Conditionally register the view based on plugin settings
+if settings.PLUGINS_CONFIG.get('netbox_device_view', {}).get('show_site_ports', True):
+    SiteDeviceElevationView = register_model_view(Site, name='ports', path='ports')(SiteDeviceElevationView)

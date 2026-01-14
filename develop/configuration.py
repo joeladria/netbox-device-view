@@ -15,6 +15,14 @@ CHANGELOG_RETENTION = 7
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8000"]
 PLUGINS = ["netbox_device_view", "netbox_custom_objects"]
 
+# Plugin configuration
+PLUGINS_CONFIG = {
+    "netbox_device_view": {
+        "show_site_ports": True,        # Enable/disable the Site PORTS tab
+        "ports_tab_label": "PORTS",  # Customize the tab label (defaults to "Port View")
+    }
+}
+
 API_TOKEN_PEPPERS = {}
 if api_token_pepper := os.environ.get('API_TOKEN_PEPPER_1', ''):
     API_TOKEN_PEPPERS.update({1: api_token_pepper})

@@ -12,7 +12,11 @@ class NetBoxDeviceViewConfig(PluginConfig):
     author = metadata.get("Author")
     base_url = "device_view"
     required_settings = []
-    default_settings = {"show_on_device_tab": False}
+    default_settings = {
+        "show_on_device_tab": False,
+        "show_site_ports": False,
+        "site_ports_label": "Port View"
+    }
 
 
 config = NetBoxDeviceViewConfig
