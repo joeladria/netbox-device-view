@@ -5,18 +5,34 @@ from netbox.models import NetBoxModel
 
 
 class DeviceView(NetBoxModel):
-    device_type = models.ForeignKey(
+    device_types = models.ManyToManyField(
         to="dcim.DeviceType",
-        on_delete=models.PROTECT,
-        related_name="+",
+        related_name="device_views",
         blank=False,
-        null=False,
     )
 
     grid_template_area = models.TextField(blank=False)
+    
+    name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Optional name for this device view"
+    )
 
     class Meta:
-        ordering = ("device_type",)
+        ordering = ("id",)
 
     def __str__(self):
-        return self.device_type.model
+        if self.name:
+            return self.name
+        types = self.device_types.all()
+        if types.count() == 1:
+            return types.first().model
+        elif types.count() > 1:
+            return f"View for {types.count()} device types"
+        return f"DeviceView #{self.pk}"
+    
+    @property
+    def device_type_list(self):
+        """Return comma-separated list of device type models"""
+        return ", ".join([dt.model for dt in self.device_types.all()])

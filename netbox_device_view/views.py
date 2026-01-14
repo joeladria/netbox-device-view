@@ -46,7 +46,7 @@ class DeviceDeviceView(generic.ObjectView):
     tab = ViewTab(
         label="Device View",
         badge=lambda obj: models.DeviceView.objects.filter(
-            device_type=obj.device_type
+            device_types=obj.device_type
         ).count(),
         hide_if_empty=True,
     )
@@ -65,7 +65,7 @@ class DeviceDeviceView(generic.ObjectView):
         
         return {
             "device_view": models.DeviceView.objects.filter(
-                device_type=instance.device_type
+                device_types=instance.device_type
             ).first(),
             "dv": dv,
             "modules": modules,
@@ -98,7 +98,7 @@ class SiteDeviceElevationView(generic.ObjectView):
         )
 
         prepared_devices_data = []
-        device_types_with_view = models.DeviceView.objects.values_list('device_type_id', flat=True)
+        device_types_with_view = models.DeviceView.objects.values_list('device_types', flat=True)
         devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
         display_size_param = request.GET.get("display_size", "medium")
 
@@ -137,7 +137,7 @@ class SiteDeviceElevationView(generic.ObjectView):
     tab = ViewTab(
         label=settings.PLUGINS_CONFIG.get('netbox_device_view', {}).get('ports_tab_label', 'Port View'),
         badge=lambda obj: obj.devices.filter(
-            device_type_id__in=models.DeviceView.objects.values_list('device_type_id', flat=True)
+            device_type_id__in=models.DeviceView.objects.values_list('device_types', flat=True)
         ).count(),
         hide_if_empty=True,
     )

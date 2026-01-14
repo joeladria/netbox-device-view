@@ -164,7 +164,9 @@ def prepare(obj, instance_prefix=None):
 
     try:
         if obj.virtual_chassis is None:
-            device_view_instance = device_view_model.objects.get(device_type=obj.device_type)
+            device_view_instance = device_view_model.objects.filter(device_types=obj.device_type).first()
+            if not device_view_instance:
+                return None, None, None
             grid_css = device_view_instance.grid_template_area
 
             if instance_prefix:
@@ -194,7 +196,9 @@ def prepare(obj, instance_prefix=None):
             )
         else:
             for member in obj.virtual_chassis.members.all():
-                member_device_view_instance = device_view_model.objects.get(device_type=member.device_type)
+                member_device_view_instance = device_view_model.objects.filter(device_types=member.device_type).first()
+                if not member_device_view_instance:
+                    continue
                 member_grid_css = member_device_view_instance.grid_template_area
                 
                 processed_member_grid_css = member_grid_css.replace(".area", ".area.d" + str(member.vc_position))
