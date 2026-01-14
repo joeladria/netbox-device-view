@@ -6,7 +6,10 @@ from .models import DeviceView
 
 class DeviceViewTable(NetBoxTable):
     id = tables.Column(
-        linkify=True
+        linkify={
+            "viewname": "plugins:netbox_device_view:deviceview_edit",
+            "args": [tables.A("pk")]
+        }
     )
     name = tables.Column()
     device_types = tables.TemplateColumn(
