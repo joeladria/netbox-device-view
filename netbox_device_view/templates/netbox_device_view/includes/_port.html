@@ -34,14 +34,7 @@ Expects:
     {% if port.untagged_vlan and cable_colors != "vlan_role" %}
         vlan-{{ port.untagged_vlan.vid }}
     {% endif %}"
-    title="{% spaceless %}{{ port.name }}
-    {% if port.connected_endpoints|length > 0 %}<hr>
-        {% for ce in port.connected_endpoints %}
-        {{ ce.device }} | {{ ce.name }}<br>
-        {% endfor %}
-    {% elif port.link_peers|length > 0 %}<hr>
-        {% for lp in port.link_peers %}{% if lp.device %}{{ lp.device }} | {{ lp.name }}<br>{% elif lp.circuit %}{{ lp }}<br>{% endif %}{% endfor %}
-    {% endif %}{% endspaceless %}"
+    title="{% spaceless %}{{ port.name }}{% if port.connected_endpoints|length > 0 %}<br />{% for ce in port.connected_endpoints %}{{ ce.device }} | {{ ce.name }}<br>{% endfor %}{% elif port.link_peers|length > 0 %}<br />{% for lp in port.link_peers %}{% if lp.device %}{{ lp.device }} | {{ lp.name }}<br>{% elif lp.circuit %}{{ lp }}<br>{% endif %}{% endfor %}{% endif %}{% endspaceless %}"
     style="grid-area: {{ port.stylename }}
     {% if cable_colors == 'Cable' and port.cable and port.cable.color %}
         ; background-color: #{{ port.cable.color }}
