@@ -10,6 +10,11 @@ urlpatterns = (
         views.DeviceViewBulkImportView.as_view(),
         name="deviceview_import",
     ),
+    path(
+        "device-view/delete/",
+        views.DeviceViewBulkDeleteView.as_view(),
+        name="deviceview_bulk_delete",
+    ),
     path("device-view/<int:pk>/", views.DeviceViewView.as_view(), name="deviceview"),
     path(
         "device-view/<int:pk>/edit/",

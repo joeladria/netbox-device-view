@@ -39,6 +39,11 @@ class DeviceViewDeleteView(generic.ObjectDeleteView):
     queryset = models.DeviceView.objects
 
 
+class DeviceViewBulkDeleteView(generic.BulkDeleteView):
+    queryset = models.DeviceView.objects
+    table = tables.DeviceViewTable
+
+
 @register_model_view(Device, "deviceview", path="device-view")
 class DeviceDeviceView(generic.ObjectView):
     queryset = models.DeviceView.objects
