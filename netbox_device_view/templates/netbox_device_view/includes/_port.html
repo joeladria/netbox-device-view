@@ -34,22 +34,14 @@ Expects:
     {% if port.untagged_vlan and cable_colors != "vlan_role" %}
         vlan-{{ port.untagged_vlan.vid }}
     {% endif %}"
-    title="{{ port.name }}
+    title="{% spaceless %}{{ port.name }}
     {% if port.connected_endpoints|length > 0 %}<hr>
         {% for ce in port.connected_endpoints %}
         {{ ce.device }} | {{ ce.name }}<br>
         {% endfor %}
     {% elif port.link_peers|length > 0 %}<hr>
-        {% for lp in port.link_peers %}
-        {% if lp.device %}
-        {{ lp.device }} | {{ lp.name }}<br>
-        {% elif lp.circuit %}
-        {{ lp }}<br>
-        {% endif %}
-        {% endfor %}
-    {% endif %}
-    {% if cable_colors == 'vlan_role' %}<hr>VLAN Role Debug:<br>Role: {{ port.debug_vlan_role_name | default:"N/A" }}<br>Tag: {{ port.debug_vlan_role_tag_name | default:"N/A" }}<br>Color: {{ port.debug_vlan_role_tag_color | default:"N/A" }}{% endif %}
-    "
+        {% for lp in port.link_peers %}{% if lp.device %}{{ lp.device }} | {{ lp.name }}<br>{% elif lp.circuit %}{{ lp }}<br>{% endif %}{% endfor %}
+    {% endif %}{% endspaceless %}"
     style="grid-area: {{ port.stylename }}
     {% if cable_colors == 'Cable' and port.cable and port.cable.color %}
         ; background-color: #{{ port.cable.color }}

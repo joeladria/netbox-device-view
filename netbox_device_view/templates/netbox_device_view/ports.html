@@ -29,7 +29,7 @@
 			<a
 				href="{{int.get_absolute_url}}trace/"
 				class="{% if int.enabled and int.connected_endpoints|length > 0 %}bg-success{% elif int.enabled %}bg-secondary{% else %}bg-danger{% endif %}"
-				title="{{ int.name }}{% if int.connected_endpoints|length > 0 %}<hr>{{ int.connected_endpoints.0.device }} | {{ int.connected_endpoints.0.name }}{% endif %}"
+				title="{% spaceless %}{{ int.name }}{% if int.connected_endpoints|length > 0 %}<hr>{{ int.connected_endpoints.0.device }} | {{ int.connected_endpoints.0.name }}{% endif %}{% endspaceless %}"
 				style="grid-area: {{ int.stylename }}"
 				data-bs-toggle="tooltip"
 				data-bs-html="true"
