@@ -27,10 +27,9 @@
     }
     .device-instance-wrapper h3 {
         margin-top: 0;
-        /* margin-bottom: 1rem; Space below device name */
+        margin-bottom: 1rem; 
         font-size: 1.25rem; /* Slightly larger font for device name */
     }
-    
     /* Individual device view height, prefixed by instance_id */
     {% for data in prepared_devices %}
     .{{ data.instance_id }} .deviceview {
@@ -136,6 +135,7 @@
                         <small class="text-muted">({{ data.device_obj.device_role.name }})</small>
                     {% endif %}
                 </h3>
+                <h4>{{ data.device_obj.device_type }}</h4>
                 <div class="{{ data.instance_id }}">
                     {% spaceless %}
                         {% for device_vc_key, interfaces_list_for_vc_key in data.ports_chassis_map.items %}

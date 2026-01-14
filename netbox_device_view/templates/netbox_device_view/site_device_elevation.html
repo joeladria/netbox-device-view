@@ -11,9 +11,7 @@
             <div class="device-instance-wrapper">
                 <h3>
                     <a href="{{ data.device_obj.get_absolute_url }}">{{ data.device_obj.name|default:"Unnamed Device" }}</a>
-                    {% if data.device_obj.device_role %}
-                        <small class="text-muted">({{ data.device_obj.device_role.name }})</small>
-                    {% endif %}
+                    <a href="{{data.device_obj.device_type.get_absolute_url }}"><small class="fw-light text-muted">{{ data.device_obj.device_type }}</small></a>
                 </h3>
                 <div class="{{ data.instance_id }}">
                     {% spaceless %}
