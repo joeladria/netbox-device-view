@@ -119,7 +119,7 @@ class SiteDeviceElevationView(generic.ObjectView):
                 else:  # medium or default
                     display_cell_size = 40
                 
-                device_render_height = device.device_type.u_height * 2 * display_cell_size + device.device_type.u_height * 2
+                device_render_height = int(device.device_type.u_height * 2 * display_cell_size + device.device_type.u_height * 2)
                 
                 prepared_devices_data.append({
                     'device_obj': device,
