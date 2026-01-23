@@ -46,19 +46,8 @@ Tracker = "https://github.com/peterbaumert/netbox-device-view"
 line-length = 120
 target_version = ['py39', 'py310', 'py311', 'py312']
 
-
 [tool.setuptools.packages.find]
 exclude = ["develop*"]
 
-
 [tool.setuptools.package-data]
-netbox_sheet_view = ["templates/**"]
-
-
-
-[tool.poetry.group.dev.dependencies]
-django = "5.1.8"
-jinja2 = "3.1.6"
-django-taggit = "6.1.0"
-django-tables2 = "2.7.5"
-djangorestframework = "3.16.0"
+netbox_device_view = ["templates/**"]
