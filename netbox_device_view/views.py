@@ -4,7 +4,7 @@ from . import forms, models, tables, filtersets
 from utilities.views import ViewTab, register_model_view
 # utilities.permissions.PermissionRequiredMixin was incorrect, removed.
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin # Standard Django mixins
-from .utils import prepare
+from .utils import prepare, build_device_view_lookup
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.apps import apps
@@ -96,38 +96,107 @@ class SiteDeviceElevationView(generic.ObjectView):
         request.GET = request.GET.copy()
         request.GET['site_slug'] = instance.slug
 
-        # Re-implement the context gathering from DeviceElevationView
         site_slug = request.GET.get('site_slug')
-        devices_to_display = Device.objects.filter(site__slug=site_slug).prefetch_related(
-            'device_type', 'modules', 'interfaces', 'frontports', 'rearports', 'virtual_chassis__members'
-        )
-
-        prepared_devices_data = []
-        device_types_with_view = models.DeviceView.objects.values_list('device_types', flat=True)
-        devices_with_view_defined = devices_to_display.filter(device_type_id__in=device_types_with_view)
         display_size_param = request.GET.get("display_size", "medium")
 
-        for device in devices_with_view_defined[:50]:
+        if display_size_param == "small":
+            display_cell_size = 20
+        elif display_size_param == "large":
+            display_cell_size = 60
+        else:
+            display_cell_size = 40
+
+        # ------------------------------------------------------------------
+        # Step 1 – Identify which device_types have a DeviceView defined.
+        # ------------------------------------------------------------------
+        device_types_with_view = models.DeviceView.objects.values_list('device_types', flat=True)
+
+        # ------------------------------------------------------------------
+        # Step 2 – Fetch all matching devices in a SINGLE query with deep
+        # prefetch_related so that per-device and per-interface sub-queries
+        # are avoided inside prepare() / process_interfaces() / process_ports().
+        #
+        # Key relationships that were previously triggering N+1 queries:
+        #   • consoleports          – was a separate query per device
+        #   • interfaces__cable     – lazy-loaded in template / process_interfaces
+        #   • interfaces___path     – needed by connected_endpoints
+        #   • interfaces__untagged_vlan__role – lazy-loaded in process_interfaces
+        #   • frontports__cable / rearports__cable – lazy-loaded in template
+        #   • virtual_chassis__members (+ their own sub-relations)
+        # ------------------------------------------------------------------
+        devices_with_view_defined = (
+            Device.objects
+            .filter(site__slug=site_slug, device_type_id__in=device_types_with_view)
+            .select_related(
+                'device_type',
+                'virtual_chassis',
+            )
+            .prefetch_related(
+                # Modules
+                'modules',
+                # Interfaces and their deeply-nested relations
+                'interfaces__cable',
+                'interfaces___path',                    # CablePath → powers connected_endpoints
+                'interfaces__untagged_vlan__role',
+                'interfaces__tagged_vlans',
+                # Front / rear ports
+                'frontports__cable',
+                'frontports___link_peer_type',
+                'rearports__cable',
+                'rearports___link_peer_type',
+                # Console ports (replaces per-device ConsolePort.objects.filter())
+                'consoleports',
+                # Virtual-chassis members and their sub-relations
+                'virtual_chassis__members__device_type',
+                'virtual_chassis__members__modules',
+                'virtual_chassis__members__interfaces__cable',
+                'virtual_chassis__members__interfaces___path',
+                'virtual_chassis__members__interfaces__untagged_vlan__role',
+                'virtual_chassis__members__consoleports',
+            )
+            [:50]
+        )
+
+        # Materialise the queryset once so we can iterate it twice
+        # (once for the lookup, once for the loop below) without
+        # hitting the database a second time.
+        devices_list = list(devices_with_view_defined)
+
+        # ------------------------------------------------------------------
+        # Step 3 – Build the DeviceView lookup in ONE query for all
+        # device_types found in the current device set.
+        # Eliminates the DeviceView.objects.filter(...).first() call that
+        # was previously issued once per device inside prepare().
+        # ------------------------------------------------------------------
+        device_type_ids = [d.device_type_id for d in devices_list]
+        dv_lookup = build_device_view_lookup(device_type_ids)
+
+        # ------------------------------------------------------------------
+        # Step 4 – Build per-device render data using the pre-fetched
+        # lookup; no additional DeviceView or ConsolePort queries are
+        # issued inside prepare() at this point.
+        # ------------------------------------------------------------------
+        prepared_devices_data = []
+        for device in devices_list:
             instance_id = f"dev-{device.pk}"
-            dv_css_map, modules_map, ports_chassis_map = prepare(device, instance_prefix=instance_id)
-            
+            dv_css_map, modules_map, ports_chassis_map = prepare(
+                device,
+                instance_prefix=instance_id,
+                device_view_lookup=dv_lookup,
+            )
+
             if dv_css_map is not None:
-                if display_size_param == "small":
-                    display_cell_size = 20
-                elif display_size_param == "large":
-                    display_cell_size = 60
-                else:  # medium or default
-                    display_cell_size = 40
-                
-                device_render_height = int(device.device_type.u_height * 2 * display_cell_size + device.device_type.u_height * 2)
-                
+                device_render_height = int(
+                    device.device_type.u_height * 2 * display_cell_size
+                    + device.device_type.u_height * 2
+                )
                 prepared_devices_data.append({
                     'device_obj': device,
                     'instance_id': instance_id,
                     'dv_css_map': dv_css_map,
                     'modules_map': modules_map,
                     'ports_chassis_map': ports_chassis_map,
-                    'device_render_height': device_render_height
+                    'device_render_height': device_render_height,
                 })
 
         return {

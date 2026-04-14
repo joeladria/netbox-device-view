@@ -22,7 +22,6 @@ services:
       - '8000:8000'
     volumes:
       - ${PWD}/:/opt/netbox_device_view
-      - ${PWD}/develop/configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ${PWD}/develop/my_netbox_scripts:/opt/netbox/netbox/scripts      
       # - ${PWD}/develop/manage.py:/opt/netbox/netbox/manage.py
     env_file: ${PWD}/develop/dev.env
@@ -54,7 +53,6 @@ services:
       - python manage.py rqworker
     volumes:
       - ${PWD}/:/opt/netbox_device_view
-      - ${PWD}/develop//configuration.py:/opt/netbox/netbox/netbox/configuration.py
       - ${PWD}/develop/my_netbox_scripts:/opt/netbox/netbox/scripts            
     env_file: ${PWD}/develop/dev.env
     tty: true

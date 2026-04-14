@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.13
 
 FROM python:${PYTHON_VERSION}
 ARG NETBOX_VERSION
@@ -22,9 +22,7 @@ WORKDIR /opt/netbox_device_view
 
 COPY .. /opt/netbox_device_view
 
-RUN set -x \
-    && poetry config virtualenvs.create false \
-    && poetry install --no-ansi --no-interaction --without dev
+RUN pip install --no-cache-dir .
 
 WORKDIR /opt/netbox/netbox
 
